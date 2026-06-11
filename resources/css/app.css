@@ -346,12 +346,16 @@ h4 {
 .team-card {
     margin-top: 4em;
     color: #fff;
+    display: grid;
+    justify-items: center;
+    text-align: center;
 }
 
 .team-card img {
     width: 200px;
     height: 200px;
     object-fit: cover;
+    margin: 0 auto;
 }
 
 .team-card h4 {
