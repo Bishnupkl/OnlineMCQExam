@@ -6,6 +6,11 @@ use App\Http\Controllers\ExamController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'app');
+Route::view('/admin', 'app');
+Route::view('/login', 'app');
+Route::view('/register', 'app');
+Route::view('/notice', 'app');
+Route::view('/result', 'app');
 
 Route::prefix('api')->group(function () {
     Route::get('/session', [AuthController::class, 'session']);

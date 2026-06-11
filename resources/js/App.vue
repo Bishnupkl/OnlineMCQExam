@@ -86,6 +86,23 @@ async function api(path, options = {}) {
     return data;
 }
 
+function viewForPath(pathname) {
+    return {
+        '/admin': 'admin',
+        '/login': 'login',
+        '/register': 'register',
+        '/notice': 'notices',
+        '/result': 'dashboard',
+    }[pathname] ?? 'home';
+}
+
+function setView(nextView, path = null) {
+    view.value = nextView;
+    if (path && window.location.pathname !== path) {
+        window.history.pushState({}, '', path);
+    }
+}
+
 function setMessage(text) {
     message.value = text;
     window.setTimeout(() => {
@@ -126,14 +143,14 @@ async function loadPublicStats() {
 async function login() {
     const data = await api('/api/login', { method: 'POST', body: loginForm });
     user.value = data.user;
-    view.value = 'dashboard';
+    setView(view.value === 'login' && loginForm.role === 'admin' ? 'admin' : 'dashboard', loginForm.role === 'admin' ? '/admin' : '/result');
     await Promise.all([refreshDashboard(), loadNotices()]);
 }
 
 async function registerStudent() {
     const data = await api('/api/students', { method: 'POST', body: registerForm });
     user.value = data.user;
-    view.value = 'dashboard';
+    setView('dashboard', '/result');
     await Promise.all([refreshDashboard(), loadNotices()]);
 }
 
@@ -143,7 +160,7 @@ async function logout() {
     dashboard.value = null;
     exam.value = null;
     questions.value = [];
-    view.value = 'home';
+    setView('home', '/');
     stopTimer();
 }
 
@@ -152,7 +169,7 @@ async function startExam() {
     exam.value = data;
     Object.keys(answers).forEach((key) => delete answers[key]);
     remaining.value = data.duration_minutes * 60;
-    view.value = 'exam';
+    setView('exam');
     stopTimer();
     timer = window.setInterval(() => {
         remaining.value -= 1;
@@ -170,7 +187,7 @@ async function submitExam() {
     });
     dashboard.value = { ...(dashboard.value ?? {}), result: result.result };
     exam.value = null;
-    view.value = 'dashboard';
+    setView('dashboard', '/result');
     setMessage('Exam submitted. Result saved.');
 }
 
@@ -230,12 +247,26 @@ onMounted(async () => {
     }, 4500);
 
     try {
+        const requestedView = viewForPath(window.location.pathname);
+        view.value = requestedView;
+        if (requestedView === 'admin') {
+            loginForm.role = 'admin';
+        }
+
         const session = await api('/api/session');
         user.value = session.user;
         await Promise.all([loadNotices(), loadPublicStats()]);
         if (user.value) {
             await refreshDashboard();
-            view.value = 'dashboard';
+            if (requestedView === 'admin') {
+                view.value = isStaff.value ? 'admin' : 'dashboard';
+            } else if (['home', 'notices', 'dashboard'].includes(requestedView)) {
+                view.value = requestedView;
+            } else {
+                view.value = 'dashboard';
+            }
+        } else if (requestedView === 'admin') {
+            view.value = 'login';
         }
     } finally {
         loading.value = false;
@@ -254,22 +285,22 @@ onUnmounted(() => {
     <main>
         <header v-if="view !== 'exam' && view !== 'admin'" class="legacy-header" id="home">
             <nav class="legacy-navbar">
-                <button class="brand-button" @click="view = 'home'">
+                <button class="brand-button" @click="setView('home', '/')">
                     <img :src="'/legacy-assets/logo.png'" alt="Online Entrance Examination">
                 </button>
                 <ul class="legacy-nav">
-                    <li><button :class="{ active: view === 'home' }" @click="view = 'home'">Home</button></li>
-                    <li v-if="!user"><button :class="{ active: view === 'login' }" @click="view = 'login'">LogIn</button></li>
+                    <li><button :class="{ active: view === 'home' }" @click="setView('home', '/')">Home</button></li>
+                    <li v-if="!user"><button :class="{ active: view === 'login' }" @click="setView('login', '/login')">LogIn</button></li>
                     <li v-if="!user" class="dropdown-shell">
-                        <button :class="{ active: view === 'register' }" @click="view = 'register'">Register</button>
+                        <button :class="{ active: view === 'register' }" @click="setView('register', '/register')">Register</button>
                         <div class="dropdown-menu">
-                            <button @click="view = 'register'">Student</button>
-                            <button @click="view = 'register'">Teacher</button>
+                            <button @click="setView('register', '/register')">Student</button>
+                            <button @click="setView('register', '/register')">Teacher</button>
                         </div>
                     </li>
-                    <li><button :class="{ active: view === 'notices' }" @click="view = 'notices'">Notice</button></li>
-                    <li v-if="user"><button :class="{ active: view === 'dashboard' }" @click="view = 'dashboard'">Result</button></li>
-                    <li v-if="isStaff"><button :class="{ active: view === 'admin' }" @click="view = 'admin'">Manage</button></li>
+                    <li><button :class="{ active: view === 'notices' }" @click="setView('notices', '/notice')">Notice</button></li>
+                    <li v-if="user"><button :class="{ active: view === 'dashboard' }" @click="setView('dashboard', '/result')">Result</button></li>
+                    <li v-if="isStaff"><button :class="{ active: view === 'admin' }" @click="setView('admin', '/admin')">Manage</button></li>
                     <li><a href="#contact">Contact</a></li>
                     <li v-if="user"><button :disabled="busy" @click="runAction(logout)">Logout</button></li>
                 </ul>
