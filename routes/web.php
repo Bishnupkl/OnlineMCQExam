@@ -13,6 +13,7 @@ Route::prefix('api')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/students', [AuthController::class, 'registerStudent']);
 
+    Route::get('/public-stats', [ExamController::class, 'publicStats']);
     Route::get('/dashboard', [ExamController::class, 'dashboard']);
     Route::get('/notices', [ExamController::class, 'notices']);
     Route::get('/exam', [ExamController::class, 'exam']);

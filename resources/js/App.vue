@@ -1,19 +1,22 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 const csrf = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 const user = ref(null);
 const loading = ref(true);
 const message = ref('');
-const view = ref('dashboard');
+const view = ref('home');
 const notices = ref([]);
 const dashboard = ref(null);
+const publicStats = ref({ students: 0, teachers: 0, questions: 0, notices: 0 });
 const questions = ref([]);
 const exam = ref(null);
 const answers = reactive({});
 const remaining = ref(45 * 60);
 const busy = ref(false);
+const carouselIndex = ref(0);
 let timer = null;
+let carouselTimer = null;
 
 const loginForm = reactive({ role: 'student', email: '', password: '' });
 const registerForm = reactive({
@@ -49,6 +52,13 @@ const examProgress = computed(() => {
 });
 const resultStatusClass = computed(() => dashboard.value?.result?.status?.toLowerCase() === 'passed' ? 'passed' : 'failed');
 const latestNotice = computed(() => notices.value[0] ?? null);
+const slides = [
+    { title: 'Take entrance exam online', image: '/legacy-assets/banner1.jpg' },
+    { title: 'Secure environment', image: '/legacy-assets/banner2.jpg' },
+    { title: 'Result will be published soon', image: '/legacy-assets/banner3.jpg' },
+    { title: 'No cheating', image: '/legacy-assets/banner4.jpg' },
+];
+const activeSlide = computed(() => slides[carouselIndex.value]);
 const remainingLabel = computed(() => {
     const minutes = Math.floor(remaining.value / 60).toString().padStart(2, '0');
     const seconds = (remaining.value % 60).toString().padStart(2, '0');
@@ -109,6 +119,10 @@ async function loadNotices() {
     notices.value = (await api('/api/notices')).notices;
 }
 
+async function loadPublicStats() {
+    publicStats.value = await api('/api/public-stats');
+}
+
 async function login() {
     const data = await api('/api/login', { method: 'POST', body: loginForm });
     user.value = data.user;
@@ -129,7 +143,7 @@ async function logout() {
     dashboard.value = null;
     exam.value = null;
     questions.value = [];
-    view.value = 'dashboard';
+    view.value = 'home';
     stopTimer();
 }
 
@@ -211,78 +225,118 @@ async function saveExamDate() {
 }
 
 onMounted(async () => {
+    carouselTimer = window.setInterval(() => {
+        carouselIndex.value = (carouselIndex.value + 1) % slides.length;
+    }, 4500);
+
     try {
         const session = await api('/api/session');
         user.value = session.user;
-        await loadNotices();
+        await Promise.all([loadNotices(), loadPublicStats()]);
         if (user.value) {
             await refreshDashboard();
+            view.value = 'dashboard';
         }
     } finally {
         loading.value = false;
     }
 });
+
+onUnmounted(() => {
+    stopTimer();
+    if (carouselTimer) {
+        window.clearInterval(carouselTimer);
+    }
+});
 </script>
 
 <template>
-    <main class="shell">
-        <section class="topbar">
-            <div>
-                <p class="eyebrow">Laravel 13 + Vue 3</p>
-                <h1>Online Entrance Examination</h1>
-            </div>
-            <nav v-if="user" class="nav">
-                <button :class="{ active: view === 'dashboard' }" @click="view = 'dashboard'">Dashboard</button>
-                <button v-if="isStaff" :class="{ active: view === 'admin' }" @click="view = 'admin'">Manage</button>
-                <button :class="{ active: view === 'notices' }" @click="view = 'notices'">Notices</button>
-                <button class="ghost" :disabled="busy" @click="runAction(logout)">Logout</button>
+    <main>
+        <header class="legacy-header" id="home">
+            <nav class="legacy-navbar">
+                <button class="brand-button" @click="view = 'home'">
+                    <img :src="'/legacy-assets/logo.png'" alt="Online Entrance Examination">
+                </button>
+                <ul class="legacy-nav">
+                    <li><button :class="{ active: view === 'home' }" @click="view = 'home'">Home</button></li>
+                    <li v-if="!user"><button :class="{ active: view === 'login' }" @click="view = 'login'">LogIn</button></li>
+                    <li v-if="!user" class="dropdown-shell">
+                        <button :class="{ active: view === 'register' }" @click="view = 'register'">Register</button>
+                        <div class="dropdown-menu">
+                            <button @click="view = 'register'">Student</button>
+                            <button @click="view = 'register'">Teacher</button>
+                        </div>
+                    </li>
+                    <li><button :class="{ active: view === 'notices' }" @click="view = 'notices'">Notice</button></li>
+                    <li v-if="user"><button :class="{ active: view === 'dashboard' }" @click="view = 'dashboard'">Result</button></li>
+                    <li v-if="isStaff"><button :class="{ active: view === 'admin' }" @click="view = 'admin'">Manage</button></li>
+                    <li><a href="#contact">Contact</a></li>
+                    <li v-if="user"><button :disabled="busy" @click="runAction(logout)">Logout</button></li>
+                </ul>
+                <form class="legacy-search" @submit.prevent>
+                    <input type="search" placeholder="Search here...">
+                    <button>Search</button>
+                </form>
             </nav>
-        </section>
+        </header>
 
         <p v-if="message" class="toast">{{ message }}</p>
-        <p v-if="loading" class="panel loading-state">Loading application...</p>
+        <p v-if="loading" class="legacy-container panel loading-state">Loading application...</p>
 
-        <section v-else-if="!user" class="auth-grid">
-            <div class="intro-panel">
-                <p class="eyebrow">Modern exam workspace</p>
-                <h2>Run entrance exams, publish notices, and score MCQs from one clean dashboard.</h2>
-                <div class="feature-rail">
-                    <span>Session auth</span>
-                    <span>Timed exams</span>
-                    <span>Auto scoring</span>
-                    <span>Admin controls</span>
-                </div>
-            </div>
+        <section v-else-if="view === 'home'" class="legacy-home">
+            <section class="legacy-banner" :style="{ backgroundImage: `linear-gradient(rgba(23, 22, 23, .2), rgba(23, 22, 23, .5)), url(${activeSlide.image})` }">
+                <button class="carousel-arrow left" @click="carouselIndex = (carouselIndex + slides.length - 1) % slides.length">&lt;</button>
+                <h2>{{ activeSlide.title }}</h2>
+                <button class="carousel-arrow right" @click="carouselIndex = (carouselIndex + 1) % slides.length">&gt;</button>
+            </section>
 
-            <form class="panel auth-panel" @submit.prevent="runAction(login)">
-                <div class="form-heading">
-                    <h2>Sign in</h2>
-                    <span>{{ loginForm.role }}</span>
+            <section class="legacy-about" id="about">
+                <div class="legacy-container about-grid">
+                    <h3 class="title">Interior<span> About</span></h3>
+                    <img :src="'/legacy-assets/about2.png'" alt="Online examination illustration">
+                    <div class="about-copy">
+                        <h4>Online Entrance Examination is a web based system which allows a particular company or educational institute to arrange, conduct and manage examination via online in a secure environment. This system is <span>Multiple Choice Questions (MCQ)</span> based examination system that provides user friendly environment for both exam Conductors and Students appearing for Examination. The main objective of this system is to provide examination environment in a secure way.Security is ensured by website blocking mechanism.</h4>
+                    </div>
                 </div>
-                <label>
-                    Role
+            </section>
+
+            <section class="legacy-stats">
+                <article class="counter-grid"><span>SE</span><p>55</p><h4>Seats</h4></article>
+                <article class="counter-grid1"><span>TE</span><p>{{ dashboard?.teachers ?? publicStats.teachers }}</p><h4>Teachers</h4></article>
+                <article class="counter-grid2"><span>SU</span><p>4</p><h4>Subjects</h4></article>
+                <article class="counter-grid3"><span>ST</span><p>{{ dashboard?.students ?? publicStats.students }}</p><h4>Students</h4></article>
+            </section>
+
+            <section class="legacy-team" id="contact">
+                <h3>Team Members</h3>
+                <div class="team-card">
+                    <img :src="'/legacy-assets/bishnu.jpg'" alt="Bishnu Pokhrel">
+                    <h4>Bishnu Pokhrel</h4>
+                    <i>Nepal</i>
+                    <p>Frontend and Backend developer</p>
+                </div>
+            </section>
+        </section>
+
+        <section v-else-if="view === 'login'" class="legacy-container form-page">
+            <form class="legacy-form" @submit.prevent="runAction(login)">
+                <h2>LogIn</h2>
+                <label>Role
                     <select v-model="loginForm.role">
                         <option value="student">Student</option>
                         <option value="teacher">Teacher</option>
                         <option value="admin">Admin</option>
                     </select>
                 </label>
-                <label>
-                    Email
-                    <input v-model="loginForm.email" type="email" required>
-                </label>
-                <label>
-                    Password
-                    <input v-model="loginForm.password" type="password" required>
-                </label>
-                <button class="primary" :disabled="busy">{{ busy ? 'Working...' : 'Sign in' }}</button>
+                <label>Email <input v-model="loginForm.email" type="email" required></label>
+                <label>Password <input v-model="loginForm.password" type="password" required></label>
+                <button class="legacy-primary" :disabled="busy">{{ busy ? 'Working...' : 'LogIn' }}</button>
             </form>
+        </section>
 
-            <form class="panel auth-panel register-panel" @submit.prevent="runAction(registerStudent)">
-                <div class="form-heading">
-                    <h2>Student registration</h2>
-                    <span>new</span>
-                </div>
+        <section v-else-if="view === 'register'" class="legacy-container form-page">
+            <form class="legacy-form wide" @submit.prevent="runAction(registerStudent)">
+                <h2>Student Registration</h2>
                 <div class="two">
                     <label>Name <input v-model="registerForm.name" required></label>
                     <label>Email <input v-model="registerForm.email" type="email" required></label>
@@ -293,11 +347,11 @@ onMounted(async () => {
                 </div>
                 <label>Address <input v-model="registerForm.address"></label>
                 <label>Father name <input v-model="registerForm.fatname"></label>
-                <button class="primary" :disabled="busy">{{ busy ? 'Creating...' : 'Create student account' }}</button>
+                <button class="legacy-primary" :disabled="busy">{{ busy ? 'Creating...' : 'Register' }}</button>
             </form>
         </section>
 
-        <section v-else-if="view === 'dashboard'" class="grid">
+        <section v-else-if="view === 'dashboard'" class="legacy-container grid">
             <article class="panel hero-panel">
                 <p class="eyebrow">{{ user.role }}</p>
                 <h2>{{ user.name }}</h2>
@@ -328,7 +382,7 @@ onMounted(async () => {
             </article>
         </section>
 
-        <section v-else-if="view === 'exam' && exam" class="exam-layout">
+        <section v-else-if="view === 'exam' && exam" class="legacy-container exam-layout">
             <aside class="panel timer">
                 <p class="eyebrow">Remaining time</p>
                 <span>{{ remainingLabel }}</span>
@@ -352,7 +406,7 @@ onMounted(async () => {
             </form>
         </section>
 
-        <section v-else-if="view === 'admin'" class="admin-layout">
+        <section v-else-if="view === 'admin'" class="legacy-container admin-layout">
             <form class="panel admin-card" @submit.prevent="runAction(saveQuestion)">
                 <div class="form-heading">
                     <h2>Add question</h2>
@@ -399,7 +453,7 @@ onMounted(async () => {
             </article>
         </section>
 
-        <section v-else class="notice-list">
+        <section v-else class="legacy-container notice-list">
             <p v-if="!notices.length" class="panel empty-state">No notices published yet.</p>
             <article v-for="notice in notices" :key="notice.n_id" class="panel notice">
                 <p class="eyebrow">{{ notice.n_date }}</p>
@@ -408,5 +462,18 @@ onMounted(async () => {
                 <p>{{ notice.n_description }}</p>
             </article>
         </section>
+
+        <footer class="legacy-footer">
+            <div class="legacy-container footer-grid">
+                <div class="footer-social">
+                    <h4>Follow us on:</h4>
+                    <span>f</span>
+                    <span>t</span>
+                    <span>g+</span>
+                    <span>p</span>
+                </div>
+                <p>© {{ new Date().getFullYear() }} Online Entrance. All Rights Reserved | Design by <a href="#">Bishnu Pokhrel</a></p>
+            </div>
+        </footer>
     </main>
 </template>

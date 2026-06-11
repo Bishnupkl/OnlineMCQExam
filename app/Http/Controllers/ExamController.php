@@ -7,6 +7,7 @@ use App\Models\Notice;
 use App\Models\Question;
 use App\Models\Result;
 use App\Models\Student;
+use App\Models\Teacher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +33,16 @@ class ExamController extends Controller
     {
         return response()->json([
             'notices' => Notice::query()->latest('n_date')->limit(20)->get(),
+        ]);
+    }
+
+    public function publicStats(): JsonResponse
+    {
+        return response()->json([
+            'students' => Student::query()->count(),
+            'teachers' => Teacher::query()->count(),
+            'questions' => Question::query()->count(),
+            'notices' => Notice::query()->count(),
         ]);
     }
 
