@@ -23,6 +23,9 @@ class AdminController extends Controller
             'teachers' => Teacher::query()->count(),
             'questions' => Question::query()->count(),
             'results' => Result::query()->latest('mark_obtained')->limit(25)->get(),
+            'teacher_rows' => Teacher::query()
+                ->orderBy('t_id')
+                ->get(['t_id', 't_name', 'subject', 't_gender', 't_address', 't_phone', 't_email', 'permission']),
             'exam_date' => ExamDate::query()->latest('id')->value('edate'),
         ]);
     }

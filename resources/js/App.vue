@@ -252,7 +252,7 @@ onUnmounted(() => {
 
 <template>
     <main>
-        <header class="legacy-header" id="home">
+        <header v-if="view !== 'exam' && view !== 'admin'" class="legacy-header" id="home">
             <nav class="legacy-navbar">
                 <button class="brand-button" @click="view = 'home'">
                     <img :src="'/legacy-assets/logo.png'" alt="Online Entrance Examination">
@@ -382,75 +382,151 @@ onUnmounted(() => {
             </article>
         </section>
 
-        <section v-else-if="view === 'exam' && exam" class="legacy-container exam-layout">
-            <aside class="panel timer">
-                <p class="eyebrow">Remaining time</p>
-                <span>{{ remainingLabel }}</span>
-                <div class="progress-shell">
-                    <div class="progress-bar" :style="{ width: `${examProgress}%` }"></div>
+        <section v-else-if="view === 'exam' && exam" class="exam2-page">
+            <div class="exam2-row">
+                <div class="exam2-side"></div>
+                <div class="exam2-paper">
+                    <h1><center><b>Online Entrance Examination <br>{{ new Date().getFullYear() }}</b></center></h1>
+                    <p class="exam2-marks"><b>Full Marks: 20 <br> Pass Marks:8 <br> Time: 45 min</b></p><br>
+                    <p><i>Candidates are higly restricted to bring external devices such as mobile, pendrive, <br>external disks etc and They should click on only one botton.</i></p>
+                    <b>Attempt all questions</b>
+                    <span class="exam2-time">
+                        <input type="text" :value="Math.floor(remaining / 60)" disabled>
+                        <input class="seconds" type="text" :value="remaining % 60" disabled>
+                    </span>
+                    <span class="exam2-time-label">Remaining time</span><br><br>
+
+                    <form class="exam2-form" @submit.prevent="runAction(submitExam)">
+                        <div v-for="(question, index) in exam.questions" :key="question.q_id" class="exam2-question">
+                            {{ index + 1 }}){{ question.question }}
+                            <br>
+                            <template v-for="(choice, choiceIndex) in question.choices" :key="choice">
+                                <input
+                                    v-model="answers[question.q_id]"
+                                    type="radio"
+                                    :id="`q-${question.q_id}-${choiceIndex}`"
+                                    :name="`q${question.q_id}`"
+                                    :value="choice"
+                                >
+                                <label :for="`q-${question.q_id}-${choiceIndex}`">{{ choice }}</label>
+                            </template>
+                            <br><br>
+                        </div>
+                        <input type="submit" value="submit" class="btn-primary exam2-submit" :disabled="busy">
+                        <br><br>
+                    </form>
                 </div>
-                <small>{{ attemptedCount }} of {{ exam.questions.length }} answered</small>
-                <button class="primary" :disabled="busy" @click="runAction(submitExam)">Submit</button>
-            </aside>
-            <form class="question-list" @submit.prevent="runAction(submitExam)">
-                <article v-for="(question, index) in exam.questions" :key="question.q_id" class="panel question">
-                    <div class="question-head">
-                        <h3>{{ index + 1 }}. {{ question.question }}</h3>
-                        <span>{{ question.mark }} mark</span>
-                    </div>
-                    <label v-for="choice in question.choices" :key="choice" class="choice" :class="{ selected: answers[question.q_id] === choice }">
-                        <input v-model="answers[question.q_id]" type="radio" :name="`q-${question.q_id}`" :value="choice">
-                        {{ choice }}
-                    </label>
-                </article>
-            </form>
+                <div class="exam2-side"></div>
+            </div>
         </section>
 
-        <section v-else-if="view === 'admin'" class="legacy-container admin-layout">
-            <form class="panel admin-card" @submit.prevent="runAction(saveQuestion)">
-                <div class="form-heading">
-                    <h2>Add question</h2>
-                    <span>{{ questions.length }} total</span>
+        <section v-else-if="view === 'admin'" class="sb-admin-page">
+            <nav class="sb-topbar">
+                <a class="sb-brand"><i><b>Online Entrance Examination</b></i></a>
+                <div class="vertical-line"></div>
+                <div class="sb-search">
+                    <input type="text" placeholder="Search for...">
+                    <button type="button">Search</button>
                 </div>
-                <label>Question <textarea v-model="questionForm.question" required></textarea></label>
-                <div class="two">
-                    <label>Choice 1 <input v-model="questionForm.choice1" required></label>
-                    <label>Choice 2 <input v-model="questionForm.choice2" required></label>
-                    <label>Choice 3 <input v-model="questionForm.choice3" required></label>
-                    <label>Choice 4 <input v-model="questionForm.choice4" required></label>
-                    <label>Correct answer <input v-model="questionForm.correct_ans" required></label>
-                    <label>Mark <input v-model.number="questionForm.mark" type="number" min="0" step="0.25"></label>
+                <button class="sb-logout" :disabled="busy" @click="runAction(logout)">Logout</button>
+            </nav>
+
+            <aside class="sb-sidebar">
+                <button class="active" @click="view = 'admin'">Dashboard</button>
+                <button>Students</button>
+                <button>Teachers</button>
+                <button>Questions</button>
+                <button>Result</button>
+                <button>Notice</button>
+                <button class="sb-collapse">&lt;</button>
+            </aside>
+
+            <div class="content-wrapper">
+                <div class="admin-stats-row">
+                    <div class="admin-stat seat-box">
+                        <div class="admin-icon">seat</div>
+                        <p><span>55</span>Seats</p>
+                    </div>
+                    <div class="admin-stat student-box">
+                        <div class="admin-icon">student</div>
+                        <p><span>{{ dashboard?.students ?? 0 }}</span>Students</p>
+                    </div>
+                    <div class="admin-stat subject-box">
+                        <div class="admin-icon">subject</div>
+                        <p><span>4</span>Subjects</p>
+                    </div>
+                    <div class="admin-stat teacher-box">
+                        <div class="admin-icon">teacher</div>
+                        <p><span>{{ dashboard?.teachers ?? 0 }}</span>Teachers</p>
+                    </div>
                 </div>
-                <button class="primary" :disabled="busy">Save question</button>
-            </form>
-            <form class="panel admin-card" @submit.prevent="runAction(saveNotice)">
-                <h2>Publish notice</h2>
-                <label>Heading <input v-model="noticeForm.n_heading" required></label>
-                <label>Short text <input v-model="noticeForm.n_text"></label>
-                <label>Description <textarea v-model="noticeForm.n_description"></textarea></label>
-                <button class="primary" :disabled="busy">Publish</button>
-            </form>
-            <form v-if="user.role === 'admin'" class="panel compact-form" @submit.prevent="runAction(saveExamDate)">
-                <h2>Exam date</h2>
-                <input v-model="examDateForm.edate" type="date" required>
-                <button class="primary" :disabled="busy">Update date</button>
-            </form>
-            <article class="panel question-table">
-                <h2>Question bank</h2>
-                <p v-if="!questions.length" class="empty-state">No questions have been added yet.</p>
-                <div v-for="question in questions" :key="question.q_id" class="row">
-                    <span>{{ question.question }}</span>
-                    <button class="danger" :disabled="busy" @click="runAction(() => deleteQuestion(question.q_id))">Delete</button>
+
+                <div class="admin-date-row">
+                    <form class="admin-date-card" @submit.prevent="runAction(saveExamDate)">
+                        <h2>Set Examination Date</h2>
+                        <input v-model="examDateForm.edate" type="date" required>
+                        <button type="submit" :disabled="busy">Set Exam Date</button>
+                    </form>
+                    <form class="admin-date-card right">
+                        <h2>Set Result Date</h2>
+                        <input type="date">
+                        <button type="button">Publish Result</button>
+                    </form>
                 </div>
-            </article>
-            <article class="panel question-table" v-if="dashboard?.results?.length">
-                <h2>Recent results</h2>
-                <div v-for="result in dashboard.results" :key="result.id" class="result-row">
-                    <span>{{ result.email }}</span>
-                    <strong>{{ result.mark_obtained }}</strong>
-                    <small>{{ result.status }}</small>
+
+                <div class="admin-table-block">
+                    <h3>Grant permission to the teachers</h3>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <td>SN</td>
+                                <td>Name</td>
+                                <td>Subject</td>
+                                <td>Gender</td>
+                                <td>Address</td>
+                                <td>Phone No</td>
+                                <td>Email</td>
+                                <td>Permission</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(teacher, index) in dashboard?.teacher_rows ?? []" :key="teacher.t_id">
+                                <td>{{ index + 1 }}</td>
+                                <td>{{ teacher.t_name }}</td>
+                                <td>{{ teacher.subject }}</td>
+                                <td>{{ teacher.t_gender }}</td>
+                                <td>{{ teacher.t_address }}</td>
+                                <td>{{ teacher.t_phone }}</td>
+                                <td>{{ teacher.t_email }}</td>
+                                <td><button type="button">Grant</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-            </article>
+
+                <div class="admin-forms-row">
+                    <form class="admin-manage-card" @submit.prevent="runAction(saveQuestion)">
+                        <h2>Add question</h2>
+                        <label>Question <textarea v-model="questionForm.question" required></textarea></label>
+                        <div class="two">
+                            <label>Choice 1 <input v-model="questionForm.choice1" required></label>
+                            <label>Choice 2 <input v-model="questionForm.choice2" required></label>
+                            <label>Choice 3 <input v-model="questionForm.choice3" required></label>
+                            <label>Choice 4 <input v-model="questionForm.choice4" required></label>
+                            <label>Correct answer <input v-model="questionForm.correct_ans" required></label>
+                            <label>Mark <input v-model.number="questionForm.mark" type="number" min="0" step="0.25"></label>
+                        </div>
+                        <button type="submit" :disabled="busy">Save question</button>
+                    </form>
+                    <form class="admin-manage-card" @submit.prevent="runAction(saveNotice)">
+                        <h2>Publish notice</h2>
+                        <label>Heading <input v-model="noticeForm.n_heading" required></label>
+                        <label>Short text <input v-model="noticeForm.n_text"></label>
+                        <label>Description <textarea v-model="noticeForm.n_description"></textarea></label>
+                        <button type="submit" :disabled="busy">Publish</button>
+                    </form>
+                </div>
+            </div>
         </section>
 
         <section v-else class="legacy-container notice-list">
@@ -463,7 +539,7 @@ onUnmounted(() => {
             </article>
         </section>
 
-        <footer class="legacy-footer">
+        <footer v-if="view !== 'exam' && view !== 'admin'" class="legacy-footer">
             <div class="legacy-container footer-grid">
                 <div class="footer-social">
                     <h4>Follow us on:</h4>

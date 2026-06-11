@@ -64,7 +64,7 @@ h4 {
 }
 
 .legacy-header {
-    background: #fff;
+    background: #fff url('/legacy-assets/back2.png');
 }
 
 .legacy-navbar {
@@ -195,8 +195,6 @@ h4 {
 .legacy-banner {
     position: relative;
     min-height: 42em;
-    display: grid;
-    place-items: center;
     margin-top: -36px;
     background-size: cover;
     background-position: center;
@@ -204,7 +202,12 @@ h4 {
 }
 
 .legacy-banner h2 {
-    width: min(900px, 80%);
+    position: absolute;
+    right: 0;
+    bottom: 2.75em;
+    left: 0;
+    width: 59%;
+    margin: 0 auto;
     color: #fff;
     font-size: 4em;
     letter-spacing: 2px;
@@ -223,6 +226,10 @@ h4 {
     background: rgba(0, 0, 0, .22);
     color: #fff;
     font-size: 32px;
+}
+
+.carousel-arrow:hover {
+    background: rgba(0, 0, 0, .38);
 }
 
 .carousel-arrow.left {
@@ -411,7 +418,6 @@ h4 {
 
 .form-page,
 .grid,
-.exam-layout,
 .admin-layout,
 .notice-list {
     padding: 4em 0;
@@ -521,39 +527,6 @@ label {
     color: #ff3c41;
 }
 
-.exam-layout {
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    gap: 18px;
-    align-items: start;
-}
-
-.timer {
-    position: sticky;
-    top: 20px;
-    display: grid;
-    gap: 16px;
-}
-
-.timer span {
-    font-size: 2.6em;
-    color: #2c363e;
-    font-weight: 700;
-}
-
-.progress-shell {
-    width: 100%;
-    height: 10px;
-    overflow: hidden;
-    background: #f0f2f5;
-}
-
-.progress-bar {
-    height: 100%;
-    background: #03cce6;
-}
-
-.question-list,
 .notice-list,
 .admin-layout {
     display: grid;
@@ -563,39 +536,6 @@ label {
 .admin-layout {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
-}
-
-.question {
-    display: grid;
-    gap: 12px;
-}
-
-.question-head {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-}
-
-.question-head h3 {
-    font-size: 1.1em;
-}
-
-.choice {
-    display: grid;
-    grid-template-columns: 18px 1fr;
-    gap: 10px;
-    align-items: center;
-    border: 1px solid #eee;
-    padding: 11px;
-}
-
-.choice input {
-    width: auto;
-}
-
-.choice.selected {
-    border-color: #03cce6;
-    background: #eefcff;
 }
 
 .compact-form {
@@ -621,6 +561,331 @@ label {
 
 .empty-state {
     color: #777;
+}
+
+.exam2-page {
+    min-height: 100vh;
+    background: #fff;
+    color: #000;
+    font-family: Arial, sans-serif;
+    padding: 20px 0;
+}
+
+.exam2-row {
+    display: grid;
+    grid-template-columns: 16.6667% 66.6667% 16.6667%;
+}
+
+.exam2-paper h1 {
+    margin-top: 0;
+    font-size: 36px;
+}
+
+.exam2-marks {
+    float: right;
+    color: #777;
+}
+
+.exam2-time,
+.exam2-time-label {
+    float: right;
+}
+
+.exam2-time input {
+    width: 30px;
+    height: 20px;
+    margin-left: 4px;
+    color: lightseagreen;
+    text-align: center;
+}
+
+.exam2-time input.seconds {
+    color: red;
+}
+
+.exam2-form input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    z-index: -1;
+}
+
+.exam2-form label {
+    position: relative;
+    display: inline-block;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    padding-left: 30px;
+    padding-right: 10px;
+    line-height: 36px;
+    color: #000;
+    cursor: pointer;
+}
+
+.exam2-form label::before {
+    content: " ";
+    position: absolute;
+    top: 6px;
+    left: 0;
+    z-index: -1;
+    display: block;
+    width: 24px;
+    height: 24px;
+    border: 2px solid #000;
+    border-radius: 18px;
+}
+
+.exam2-form input[type="radio"]:checked + label {
+    padding-left: 10px;
+    color: #000;
+}
+
+.exam2-form input[type="radio"]:checked + label::before {
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: bisque;
+}
+
+.exam2-form label,
+.exam2-form label::before {
+    transition: .25s all ease;
+}
+
+.exam2-submit,
+.btn-primary {
+    border: 1px solid #007bff;
+    border-radius: 4px;
+    background: #007bff;
+    color: #fff;
+    padding: 6px 12px;
+}
+
+.sb-admin-page {
+    min-height: 100vh;
+    background: #fff;
+    color: #212529;
+    font-family: Arial, sans-serif;
+}
+
+.sb-topbar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 30;
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #343a40;
+    color: #fff;
+    padding: 0 16px;
+}
+
+.sb-brand {
+    width: 250px;
+    color: #fff;
+    font-size: 18px;
+}
+
+.vertical-line {
+    width: 1px;
+    height: 34px;
+    background: rgba(255, 255, 255, .25);
+}
+
+.sb-search {
+    display: flex;
+    margin-left: auto;
+}
+
+.sb-search input {
+    width: 220px;
+    border: 1px solid #ced4da;
+    border-radius: 4px 0 0 4px;
+    padding: 8px 12px;
+}
+
+.sb-search button,
+.sb-logout,
+.admin-date-card button,
+.admin-table button,
+.admin-manage-card button {
+    border: 0;
+    border-radius: 4px;
+    background: #007bff;
+    color: #fff;
+    padding: 8px 12px;
+}
+
+.sb-search button {
+    border-radius: 0 4px 4px 0;
+}
+
+.sb-logout {
+    background: transparent;
+}
+
+.sb-sidebar {
+    position: fixed;
+    top: 56px;
+    bottom: 0;
+    left: 0;
+    z-index: 20;
+    width: 250px;
+    background: whitesmoke;
+    padding-top: 8px;
+}
+
+.sb-sidebar button {
+    width: 100%;
+    border: 0;
+    background: whitesmoke;
+    color: darkcyan;
+    padding: 15px 22px;
+    text-align: left;
+}
+
+.sb-sidebar button:hover,
+.sb-sidebar button.active {
+    background: #e9ecef;
+}
+
+.sb-sidebar .sb-collapse {
+    position: absolute;
+    bottom: 0;
+    text-align: center;
+}
+
+.content-wrapper {
+    margin-left: 250px;
+    padding: 74px 16px 32px;
+}
+
+.admin-stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    margin-top: -10px;
+}
+
+.admin-stat {
+    min-height: 126px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    text-align: center;
+    padding: 12px;
+}
+
+.admin-icon {
+    width: 80px;
+    height: 54px;
+    display: grid;
+    place-items: center;
+    color: rgba(255, 255, 255, .86);
+    border: 2px solid rgba(255, 255, 255, .55);
+    border-radius: 4px;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.admin-stat p {
+    color: #fff;
+    padding: 5px;
+}
+
+.admin-stat p span {
+    color: #fff;
+    padding: 5px;
+    font-size: 23px;
+}
+
+.seat-box {
+    background: #76daff;
+}
+
+.student-box {
+    background: #47cf73;
+}
+
+.subject-box {
+    background: #fcd000;
+}
+
+.teacher-box {
+    background: #ff3c41;
+}
+
+.admin-date-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 50px;
+}
+
+.admin-date-card h2,
+.admin-table-block h3 {
+    color: #20b2aa;
+}
+
+.admin-date-card.right {
+    text-align: right;
+}
+
+.admin-date-card input {
+    background: lightseagreen;
+    color: #fff;
+    border: 0;
+    padding: 7px;
+}
+
+.admin-date-card button,
+.admin-manage-card button {
+    background: lightseagreen;
+}
+
+.admin-table-block {
+    margin-top: 34px;
+    overflow-x: auto;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table thead tr {
+    background: lightseagreen;
+}
+
+.admin-table thead td {
+    color: #fff;
+}
+
+.admin-table tbody tr {
+    background: whitesmoke;
+}
+
+.admin-table td {
+    border: 1px solid #dee2e6;
+    padding: 8px;
+}
+
+.admin-forms-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 34px;
+}
+
+.admin-manage-card {
+    border: 1px solid #dee2e6;
+    background: #fff;
+    padding: 20px;
+}
+
+.admin-manage-card h2 {
+    color: #20b2aa;
 }
 
 @media (max-width: 1000px) {
@@ -654,9 +919,12 @@ label {
     .about-grid,
     .legacy-stats,
     .grid,
-    .exam-layout,
     .admin-layout,
-    .two {
+    .two,
+    .exam2-row,
+    .admin-stats-row,
+    .admin-date-row,
+    .admin-forms-row {
         grid-template-columns: 1fr;
     }
 
@@ -667,7 +935,23 @@ label {
         text-align: center;
     }
 
-    .timer {
+    .sb-sidebar {
         position: static;
+        width: 100%;
+        padding-top: 56px;
+    }
+
+    .content-wrapper {
+        margin-left: 0;
+    }
+
+    .sb-topbar {
+        flex-wrap: wrap;
+        min-height: auto;
+        padding: 10px;
+    }
+
+    .sb-brand {
+        width: auto;
     }
 }
