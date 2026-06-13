@@ -136,6 +136,7 @@ function viewForPath(pathname) {
         '/register': 'register',
         '/notice': 'notices',
         '/result': 'dashboard',
+        '/exam': 'exam',
     }[pathname] ?? 'home';
 }
 
@@ -228,7 +229,7 @@ async function startExam() {
     exam.value = data;
     Object.keys(answers).forEach((key) => delete answers[key]);
     remaining.value = data.duration_minutes * 60;
-    setView('exam');
+    setView('exam', '/exam');
     stopTimer();
     timer = window.setInterval(() => {
         remaining.value -= 1;
@@ -481,12 +482,14 @@ onMounted(async () => {
             await refreshDashboard();
             if (requestedView === 'admin') {
                 view.value = isStaff.value ? 'admin' : 'dashboard';
+            } else if (requestedView === 'exam' && user.value.role === 'student' && !dashboard.value?.result) {
+                await startExam();
             } else if (['home', 'notices', 'dashboard'].includes(requestedView)) {
                 view.value = requestedView;
             } else {
                 view.value = 'dashboard';
             }
-        } else if (requestedView === 'admin') {
+        } else if (['admin', 'exam'].includes(requestedView)) {
             view.value = 'login';
         }
     } finally {
