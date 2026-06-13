@@ -46,8 +46,14 @@ class ExamController extends Controller
     public function publicStats(): JsonResponse
     {
         return response()->json([
+            'seats' => 55,
             'students' => Student::query()->count(),
             'teachers' => Teacher::query()->count(),
+            'subjects' => Teacher::query()
+                ->whereNotNull('subject')
+                ->where('subject', '!=', '')
+                ->distinct('subject')
+                ->count('subject') ?: 4,
             'questions' => Question::query()->count(),
             'notices' => Notice::query()->count(),
         ]);

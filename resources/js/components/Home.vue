@@ -29,9 +29,9 @@ defineEmits(['previous-slide', 'next-slide']);
         </section>
 
         <section class="legacy-stats">
-            <article class="counter-grid"><span>SE</span><p>55</p><h4>Seats</h4></article>
+            <article class="counter-grid"><span>SE</span><p>{{ publicStats.seats ?? 55 }}</p><h4>Seats</h4></article>
             <article class="counter-grid1"><span>TE</span><p>{{ dashboard?.teachers ?? publicStats.teachers }}</p><h4>Teachers</h4></article>
-            <article class="counter-grid2"><span>SU</span><p>4</p><h4>Subjects</h4></article>
+            <article class="counter-grid2"><span>SU</span><p>{{ publicStats.subjects ?? 4 }}</p><h4>Subjects</h4></article>
             <article class="counter-grid3"><span>ST</span><p>{{ dashboard?.students ?? publicStats.students }}</p><h4>Students</h4></article>
         </section>
 
