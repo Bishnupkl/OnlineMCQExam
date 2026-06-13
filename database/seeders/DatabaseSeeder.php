@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             AdminUserSeeder::class,
             StudentUserSeeder::class,
+            TeacherUserSeeder::class,
         ]);
 
         $admin = AdminAccount::updateOrCreate(
