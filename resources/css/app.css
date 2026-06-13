@@ -620,50 +620,28 @@ label {
 }
 
 .exam2-form input[type="radio"] {
-    position: absolute;
-    opacity: 0;
-    z-index: -1;
+    width: 15px;
+    height: 15px;
+    margin: 0 6px 0 14px;
+    vertical-align: middle;
+    accent-color: lightseagreen;
 }
 
 .exam2-form label {
-    position: relative;
     display: inline-block;
-    margin-right: 10px;
-    margin-bottom: 10px;
-    padding-left: 30px;
-    padding-right: 10px;
-    line-height: 36px;
+    margin: 0 10px 10px 0;
+    line-height: 24px;
     color: #000;
     cursor: pointer;
 }
 
-.exam2-form label::before {
-    content: " ";
-    position: absolute;
-    top: 6px;
-    left: 0;
-    z-index: -1;
-    display: block;
-    width: 24px;
-    height: 24px;
-    border: 2px solid #000;
-    border-radius: 18px;
-}
-
 .exam2-form input[type="radio"]:checked + label {
-    padding-left: 10px;
+    font-weight: 700;
     color: #000;
 }
 
-.exam2-form input[type="radio"]:checked + label::before {
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: bisque;
-}
-
 .exam2-form label,
-.exam2-form label::before {
+.exam2-form input[type="radio"] {
     transition: .25s all ease;
 }
 
