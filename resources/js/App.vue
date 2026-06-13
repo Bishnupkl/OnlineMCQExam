@@ -5,6 +5,7 @@ const csrf = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 const user = ref(null);
 const loading = ref(true);
 const message = ref('');
+const messageType = ref('success');
 const view = ref('home');
 const adminSection = ref('dashboard');
 const currentPath = ref(window.location.pathname);
@@ -71,6 +72,13 @@ const resultForm = reactive({
     status: 'not taken',
 });
 const examDateForm = reactive({ edate: '' });
+const editing = reactive({
+    student: null,
+    teacher: null,
+    question: null,
+    result: null,
+    notice: null,
+});
 
 const isStaff = computed(() => ['admin', 'teacher'].includes(user.value?.role));
 const showPublicChrome = computed(() => currentPath.value === '/' || !['exam', 'admin'].includes(view.value));
@@ -149,8 +157,9 @@ function setAdminSection(section) {
     setView('admin', section === 'dashboard' ? '/admin' : `/admin/${section}`);
 }
 
-function setMessage(text) {
+function setMessage(text, type = 'success') {
     message.value = text;
+    messageType.value = type;
     window.setTimeout(() => {
         if (message.value === text) {
             message.value = '';
@@ -165,7 +174,7 @@ async function runAction(action) {
     try {
         await action();
     } catch (error) {
-        setMessage(error.message || 'Something went wrong.');
+        setMessage(error.message || 'Something went wrong.', 'error');
     } finally {
         busy.value = false;
     }
@@ -259,22 +268,78 @@ async function loadAdmin() {
 }
 
 async function saveQuestion() {
-    await api('/api/admin/questions', { method: 'POST', body: questionForm });
-    Object.assign(questionForm, {
-        question: '',
-        choice1: '',
-        choice2: '',
-        choice3: '',
-        choice4: '',
-        correct_ans: '',
-        mark: 1,
-    });
+    const wasEditing = Boolean(editing.question);
+    if (wasEditing) {
+        await api(`/api/admin/questions/${editing.question}`, { method: 'PUT', body: questionForm });
+    } else {
+        await api('/api/admin/questions', { method: 'POST', body: questionForm });
+    }
+    resetQuestionForm();
     await loadAdmin();
-    setMessage('Question saved.');
+    setMessage(wasEditing ? 'Question updated successfully.' : 'Question saved successfully.');
 }
 
 async function saveStudent() {
-    await api('/api/admin/students', { method: 'POST', body: studentForm });
+    const wasEditing = Boolean(editing.student);
+    if (wasEditing) {
+        await api(`/api/admin/students/${editing.student}`, { method: 'PUT', body: studentForm });
+    } else {
+        await api('/api/admin/students', { method: 'POST', body: studentForm });
+    }
+    resetStudentForm();
+    await loadAdmin();
+    setMessage(wasEditing ? 'Student updated successfully.' : 'Student saved successfully.');
+}
+
+async function saveTeacher() {
+    const wasEditing = Boolean(editing.teacher);
+    if (wasEditing) {
+        await api(`/api/admin/teachers/${editing.teacher}`, { method: 'PUT', body: teacherForm });
+    } else {
+        await api('/api/admin/teachers', { method: 'POST', body: teacherForm });
+    }
+    resetTeacherForm();
+    await loadAdmin();
+    setMessage(wasEditing ? 'Teacher updated successfully.' : 'Teacher saved successfully.');
+}
+
+async function saveResult() {
+    const wasEditing = Boolean(editing.result);
+    if (wasEditing) {
+        await api(`/api/admin/results/${editing.result}`, { method: 'PUT', body: resultForm });
+    } else {
+        await api('/api/admin/results', { method: 'POST', body: resultForm });
+    }
+    resetResultForm();
+    await loadAdmin();
+    setMessage(wasEditing ? 'Result updated successfully.' : 'Result saved successfully.');
+}
+
+async function deleteQuestion(id) {
+    await api(`/api/admin/questions/${id}`, { method: 'DELETE' });
+    await loadAdmin();
+}
+
+async function saveNotice() {
+    const wasEditing = Boolean(editing.notice);
+    if (wasEditing) {
+        await api(`/api/admin/notices/${editing.notice}`, { method: 'PUT', body: noticeForm });
+    } else {
+        await api('/api/admin/notices', { method: 'POST', body: noticeForm });
+    }
+    resetNoticeForm();
+    await loadNotices();
+    setMessage(wasEditing ? 'Notice updated successfully.' : 'Notice saved successfully.');
+}
+
+async function saveExamDate() {
+    await api('/api/admin/exam-date', { method: 'POST', body: examDateForm });
+    await refreshDashboard();
+    setMessage('Exam date updated.');
+}
+
+function resetStudentForm() {
+    editing.student = null;
     Object.assign(studentForm, {
         name: '',
         address: '',
@@ -286,12 +351,25 @@ async function saveStudent() {
         gender: '',
         exam_status: 'not taken',
     });
-    await loadAdmin();
-    setMessage('Student saved.');
 }
 
-async function saveTeacher() {
-    await api('/api/admin/teachers', { method: 'POST', body: teacherForm });
+function editStudent(student) {
+    editing.student = student.id;
+    Object.assign(studentForm, {
+        name: student.name ?? '',
+        address: student.address ?? '',
+        fatname: student.fatname ?? '',
+        dob: student.dob ? String(student.dob).slice(0, 10) : '',
+        phone: student.phone ?? '',
+        email: student.email ?? '',
+        password: '',
+        gender: student.gender ?? '',
+        exam_status: student.exam_status ?? 'not taken',
+    });
+}
+
+function resetTeacherForm() {
+    editing.teacher = null;
     Object.assign(teacherForm, {
         t_name: '',
         t_gender: '',
@@ -302,12 +380,50 @@ async function saveTeacher() {
         subject: '',
         permission: '',
     });
-    await loadAdmin();
-    setMessage('Teacher saved.');
 }
 
-async function saveResult() {
-    await api('/api/admin/results', { method: 'POST', body: resultForm });
+function editTeacher(teacher) {
+    editing.teacher = teacher.t_id;
+    Object.assign(teacherForm, {
+        t_name: teacher.t_name ?? '',
+        t_gender: teacher.t_gender ?? '',
+        t_address: teacher.t_address ?? '',
+        t_phone: teacher.t_phone ?? '',
+        t_email: teacher.t_email ?? '',
+        t_password: '',
+        subject: teacher.subject ?? '',
+        permission: teacher.permission ?? '',
+    });
+}
+
+function resetQuestionForm() {
+    editing.question = null;
+    Object.assign(questionForm, {
+        question: '',
+        choice1: '',
+        choice2: '',
+        choice3: '',
+        choice4: '',
+        correct_ans: '',
+        mark: 1,
+    });
+}
+
+function editQuestion(question) {
+    editing.question = question.q_id;
+    Object.assign(questionForm, {
+        question: question.question ?? '',
+        choice1: question.choice1 ?? '',
+        choice2: question.choice2 ?? '',
+        choice3: question.choice3 ?? '',
+        choice4: question.choice4 ?? '',
+        correct_ans: question.correct_ans ?? '',
+        mark: question.mark ?? 1,
+    });
+}
+
+function resetResultForm() {
+    editing.result = null;
     Object.assign(resultForm, {
         email: '',
         ques_attempted: 0,
@@ -316,26 +432,32 @@ async function saveResult() {
         wrong_answer: 0,
         status: 'not taken',
     });
-    await loadAdmin();
-    setMessage('Result saved.');
 }
 
-async function deleteQuestion(id) {
-    await api(`/api/admin/questions/${id}`, { method: 'DELETE' });
-    await loadAdmin();
+function editResult(result) {
+    editing.result = result.id;
+    Object.assign(resultForm, {
+        email: result.email ?? '',
+        ques_attempted: result.ques_attempted ?? 0,
+        mark_obtained: result.mark_obtained ?? 0,
+        right_answer: result.right_answer ?? 0,
+        wrong_answer: result.wrong_answer ?? 0,
+        status: result.status ?? 'not taken',
+    });
 }
 
-async function saveNotice() {
-    await api('/api/admin/notices', { method: 'POST', body: noticeForm });
+function resetNoticeForm() {
+    editing.notice = null;
     Object.assign(noticeForm, { n_heading: '', n_text: '', n_description: '' });
-    await loadNotices();
-    setMessage('Notice published.');
 }
 
-async function saveExamDate() {
-    await api('/api/admin/exam-date', { method: 'POST', body: examDateForm });
-    await refreshDashboard();
-    setMessage('Exam date updated.');
+function editNotice(notice) {
+    editing.notice = notice.n_id;
+    Object.assign(noticeForm, {
+        n_heading: notice.n_heading ?? '',
+        n_text: notice.n_text ?? '',
+        n_description: notice.n_description ?? '',
+    });
 }
 
 onMounted(async () => {
@@ -420,7 +542,7 @@ function syncViewFromPath() {
             </nav>
         </header>
 
-        <p v-if="message" class="toast">{{ message }}</p>
+        <p v-if="message" class="toast" :class="messageType">{{ message }}</p>
         <p v-if="loading" class="legacy-container panel loading-state">Loading application...</p>
 
         <section v-else-if="view === 'home'" class="legacy-home">
@@ -617,18 +739,19 @@ function syncViewFromPath() {
                 <div v-if="adminSection === 'dashboard' || adminSection === 'teachers'" class="admin-table-block">
                     <h3>Grant permission to the teachers</h3>
                     <form v-if="adminSection === 'teachers'" class="admin-manage-card admin-section-form" @submit.prevent="runAction(saveTeacher)">
-                        <h2>Add teacher</h2>
+                        <h2>{{ editing.teacher ? 'Edit teacher' : 'Add teacher' }}</h2>
                         <div class="two">
                             <label>Name <input v-model="teacherForm.t_name" required></label>
                             <label>Email <input v-model="teacherForm.t_email" type="email" required></label>
-                            <label>Password <input v-model="teacherForm.t_password" type="password" required></label>
+                            <label>Password <input v-model="teacherForm.t_password" type="password" :required="!editing.teacher"></label>
                             <label>Subject <input v-model="teacherForm.subject"></label>
                             <label>Gender <input v-model="teacherForm.t_gender"></label>
                             <label>Phone <input v-model="teacherForm.t_phone"></label>
                             <label>Address <input v-model="teacherForm.t_address"></label>
                             <label>Permission <input v-model="teacherForm.permission"></label>
                         </div>
-                        <button type="submit" :disabled="busy">Save teacher</button>
+                        <button type="submit" :disabled="busy">{{ editing.teacher ? 'Update teacher' : 'Save teacher' }}</button>
+                        <button v-if="editing.teacher" type="button" class="admin-cancel" @click="resetTeacherForm">Cancel edit</button>
                     </form>
                     <table class="admin-table">
                         <thead>
@@ -641,6 +764,7 @@ function syncViewFromPath() {
                                 <td>Phone No</td>
                                 <td>Email</td>
                                 <td>Permission</td>
+                                <td>Action</td>
                             </tr>
                         </thead>
                         <tbody>
@@ -653,6 +777,7 @@ function syncViewFromPath() {
                                 <td>{{ teacher.t_phone }}</td>
                                 <td>{{ teacher.t_email }}</td>
                                 <td><button type="button">Grant</button></td>
+                                <td><button type="button" @click="editTeacher(teacher)">Edit</button></td>
                             </tr>
                         </tbody>
                     </table>
@@ -661,11 +786,11 @@ function syncViewFromPath() {
                 <div v-if="adminSection === 'students'" class="admin-table-block">
                     <h3>Students</h3>
                     <form class="admin-manage-card admin-section-form" @submit.prevent="runAction(saveStudent)">
-                        <h2>Add student</h2>
+                        <h2>{{ editing.student ? 'Edit student' : 'Add student' }}</h2>
                         <div class="two">
                             <label>Name <input v-model="studentForm.name" required></label>
                             <label>Email <input v-model="studentForm.email" type="email" required></label>
-                            <label>Password <input v-model="studentForm.password" type="password" required></label>
+                            <label>Password <input v-model="studentForm.password" type="password" :required="!editing.student"></label>
                             <label>Phone <input v-model="studentForm.phone"></label>
                             <label>Date of birth <input v-model="studentForm.dob" type="date"></label>
                             <label>Gender <input v-model="studentForm.gender"></label>
@@ -678,7 +803,8 @@ function syncViewFromPath() {
                                 </select>
                             </label>
                         </div>
-                        <button type="submit" :disabled="busy">Save student</button>
+                        <button type="submit" :disabled="busy">{{ editing.student ? 'Update student' : 'Save student' }}</button>
+                        <button v-if="editing.student" type="button" class="admin-cancel" @click="resetStudentForm">Cancel edit</button>
                     </form>
                     <table class="admin-table">
                         <thead>
@@ -692,6 +818,7 @@ function syncViewFromPath() {
                                 <td>Email</td>
                                 <td>Gender</td>
                                 <td>Exam Status</td>
+                                <td>Action</td>
                             </tr>
                         </thead>
                         <tbody>
@@ -705,6 +832,7 @@ function syncViewFromPath() {
                                 <td>{{ student.email }}</td>
                                 <td>{{ student.gender }}</td>
                                 <td>{{ student.exam_status }}</td>
+                                <td><button type="button" @click="editStudent(student)">Edit</button></td>
                             </tr>
                         </tbody>
                     </table>
@@ -713,7 +841,7 @@ function syncViewFromPath() {
                 <div v-if="adminSection === 'questions'" class="admin-table-block">
                     <h3>Questions</h3>
                     <form class="admin-manage-card admin-section-form" @submit.prevent="runAction(saveQuestion)">
-                        <h2>Add question</h2>
+                        <h2>{{ editing.question ? 'Edit question' : 'Add question' }}</h2>
                         <label>Question <textarea v-model="questionForm.question" required></textarea></label>
                         <div class="two">
                             <label>Choice 1 <input v-model="questionForm.choice1" required></label>
@@ -723,7 +851,8 @@ function syncViewFromPath() {
                             <label>Correct answer <input v-model="questionForm.correct_ans" required></label>
                             <label>Mark <input v-model.number="questionForm.mark" type="number" min="0" step="0.25"></label>
                         </div>
-                        <button type="submit" :disabled="busy">Save question</button>
+                        <button type="submit" :disabled="busy">{{ editing.question ? 'Update question' : 'Save question' }}</button>
+                        <button v-if="editing.question" type="button" class="admin-cancel" @click="resetQuestionForm">Cancel edit</button>
                     </form>
                     <table class="admin-table">
                         <thead>
@@ -749,7 +878,10 @@ function syncViewFromPath() {
                                 <td>{{ question.choice4 }}</td>
                                 <td>{{ question.correct_ans }}</td>
                                 <td>{{ question.mark }}</td>
-                                <td><button type="button" :disabled="busy" @click="runAction(() => deleteQuestion(question.q_id))">Delete</button></td>
+                                <td>
+                                    <button type="button" @click="editQuestion(question)">Edit</button>
+                                    <button type="button" :disabled="busy" @click="runAction(() => deleteQuestion(question.q_id))">Delete</button>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -758,7 +890,7 @@ function syncViewFromPath() {
                 <div v-if="adminSection === 'result'" class="admin-table-block">
                     <h3>Result</h3>
                     <form class="admin-manage-card admin-section-form" @submit.prevent="runAction(saveResult)">
-                        <h2>Add result</h2>
+                        <h2>{{ editing.result ? 'Edit result' : 'Add result' }}</h2>
                         <div class="two">
                             <label>Email <input v-model="resultForm.email" type="email" required></label>
                             <label>Attempted <input v-model.number="resultForm.ques_attempted" type="number" min="0" required></label>
@@ -773,7 +905,8 @@ function syncViewFromPath() {
                                 </select>
                             </label>
                         </div>
-                        <button type="submit" :disabled="busy">Save result</button>
+                        <button type="submit" :disabled="busy">{{ editing.result ? 'Update result' : 'Save result' }}</button>
+                        <button v-if="editing.result" type="button" class="admin-cancel" @click="resetResultForm">Cancel edit</button>
                     </form>
                     <table class="admin-table">
                         <thead>
@@ -785,6 +918,7 @@ function syncViewFromPath() {
                                 <td>Right</td>
                                 <td>Wrong</td>
                                 <td>Status</td>
+                                <td>Action</td>
                             </tr>
                         </thead>
                         <tbody>
@@ -796,6 +930,7 @@ function syncViewFromPath() {
                                 <td>{{ result.right_answer }}</td>
                                 <td>{{ result.wrong_answer }}</td>
                                 <td>{{ result.status }}</td>
+                                <td><button type="button" @click="editResult(result)">Edit</button></td>
                             </tr>
                         </tbody>
                     </table>
@@ -804,11 +939,12 @@ function syncViewFromPath() {
                 <div v-if="adminSection === 'notice'" class="admin-table-block">
                     <h3>Notice</h3>
                     <form class="admin-manage-card admin-section-form" @submit.prevent="runAction(saveNotice)">
-                        <h2>Add notice</h2>
+                        <h2>{{ editing.notice ? 'Edit notice' : 'Add notice' }}</h2>
                         <label>Heading <input v-model="noticeForm.n_heading" required></label>
                         <label>Short text <input v-model="noticeForm.n_text"></label>
                         <label>Description <textarea v-model="noticeForm.n_description"></textarea></label>
-                        <button type="submit" :disabled="busy">Save notice</button>
+                        <button type="submit" :disabled="busy">{{ editing.notice ? 'Update notice' : 'Save notice' }}</button>
+                        <button v-if="editing.notice" type="button" class="admin-cancel" @click="resetNoticeForm">Cancel edit</button>
                     </form>
                     <table class="admin-table">
                         <thead>
@@ -818,6 +954,7 @@ function syncViewFromPath() {
                                 <td>Heading</td>
                                 <td>Text</td>
                                 <td>Description</td>
+                                <td>Action</td>
                             </tr>
                         </thead>
                         <tbody>
@@ -827,6 +964,7 @@ function syncViewFromPath() {
                                 <td>{{ notice.n_heading }}</td>
                                 <td>{{ notice.n_text }}</td>
                                 <td>{{ notice.n_description }}</td>
+                                <td><button type="button" @click="editNotice(notice)">Edit</button></td>
                             </tr>
                         </tbody>
                     </table>

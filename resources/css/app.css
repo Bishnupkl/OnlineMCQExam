@@ -424,6 +424,14 @@ h4 {
     font-weight: 600;
 }
 
+.toast.success {
+    background: #138a72;
+}
+
+.toast.error {
+    background: #c0392b;
+}
+
 .form-page,
 .grid,
 .admin-layout,

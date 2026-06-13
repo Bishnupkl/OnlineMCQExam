@@ -27,11 +27,16 @@ Route::prefix('api')->group(function () {
 
     Route::get('/admin/overview', [AdminController::class, 'overview']);
     Route::post('/admin/students', [AdminController::class, 'storeStudent']);
+    Route::put('/admin/students/{student}', [AdminController::class, 'updateStudent']);
     Route::get('/admin/questions', [AdminController::class, 'questions']);
     Route::post('/admin/questions', [AdminController::class, 'storeQuestion']);
+    Route::put('/admin/questions/{question}', [AdminController::class, 'updateQuestion']);
     Route::delete('/admin/questions/{question}', [AdminController::class, 'deleteQuestion']);
     Route::post('/admin/notices', [AdminController::class, 'storeNotice']);
+    Route::put('/admin/notices/{notice}', [AdminController::class, 'updateNotice']);
     Route::post('/admin/results', [AdminController::class, 'storeResult']);
+    Route::put('/admin/results/{result}', [AdminController::class, 'updateResult']);
     Route::post('/admin/exam-date', [AdminController::class, 'setExamDate']);
     Route::post('/admin/teachers', [AdminController::class, 'storeTeacher']);
+    Route::put('/admin/teachers/{teacher}', [AdminController::class, 'updateTeacher']);
 });

@@ -73,6 +73,31 @@ class AdminController extends Controller
         return response()->json(['question' => $question], 201);
     }
 
+    public function updateQuestion(Request $request, Question $question): JsonResponse
+    {
+        $this->requireStaff($request);
+        $data = $request->validate([
+            'question' => ['required', 'string', 'max:2000'],
+            'choice1' => ['required', 'string', 'max:255'],
+            'choice2' => ['required', 'string', 'max:255'],
+            'choice3' => ['required', 'string', 'max:255'],
+            'choice4' => ['required', 'string', 'max:255'],
+            'correct_ans' => ['required', 'string', 'max:255'],
+            'mark' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        abort_unless(in_array($data['correct_ans'], [
+            $data['choice1'],
+            $data['choice2'],
+            $data['choice3'],
+            $data['choice4'],
+        ], true), 422, 'Correct answer must match one of the choices.');
+
+        $question->update($data);
+
+        return response()->json(['question' => $question->makeVisible('correct_ans')]);
+    }
+
     public function deleteQuestion(Request $request, Question $question): JsonResponse
     {
         $this->requireStaff($request);
@@ -96,6 +121,20 @@ class AdminController extends Controller
         ]);
 
         return response()->json(['notice' => $notice], 201);
+    }
+
+    public function updateNotice(Request $request, Notice $notice): JsonResponse
+    {
+        $this->requireStaff($request);
+        $data = $request->validate([
+            'n_heading' => ['required', 'string', 'max:255'],
+            'n_text' => ['nullable', 'string', 'max:255'],
+            'n_description' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $notice->update($data);
+
+        return response()->json(['notice' => $notice]);
     }
 
     public function storeStudent(Request $request): JsonResponse
@@ -122,6 +161,30 @@ class AdminController extends Controller
         return response()->json(['student' => $student], 201);
     }
 
+    public function updateStudent(Request $request, Student $student): JsonResponse
+    {
+        $this->requireStaff($request, ['admin']);
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'address' => ['nullable', 'string', 'max:100'],
+            'fatname' => ['nullable', 'string', 'max:255'],
+            'dob' => ['nullable', 'date'],
+            'phone' => ['nullable', 'string', 'max:110'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('stu_reg', 'email')->ignore($student->id)],
+            'password' => ['nullable', 'string', 'min:6'],
+            'gender' => ['nullable', 'string', 'max:20'],
+            'exam_status' => ['nullable', Rule::in(['not taken', 'taken'])],
+        ]);
+
+        if (empty($data['password'])) {
+            unset($data['password']);
+        }
+
+        $student->update($data);
+
+        return response()->json(['student' => $student]);
+    }
+
     public function storeResult(Request $request): JsonResponse
     {
         $this->requireStaff($request, ['admin']);
@@ -140,6 +203,23 @@ class AdminController extends Controller
         );
 
         return response()->json(['result' => $result], 201);
+    }
+
+    public function updateResult(Request $request, Result $result): JsonResponse
+    {
+        $this->requireStaff($request, ['admin']);
+        $data = $request->validate([
+            'email' => ['required', 'email', 'max:255', Rule::unique('result', 'email')->ignore($result->id)],
+            'ques_attempted' => ['required', 'integer', 'min:0'],
+            'mark_obtained' => ['required', 'numeric'],
+            'right_answer' => ['required', 'integer', 'min:0'],
+            'wrong_answer' => ['required', 'integer', 'min:0'],
+            'status' => ['required', Rule::in(['not taken', 'Passed', 'Failed'])],
+        ]);
+
+        $result->update($data);
+
+        return response()->json(['result' => $result]);
     }
 
     public function setExamDate(Request $request): JsonResponse
@@ -174,6 +254,29 @@ class AdminController extends Controller
         ]);
 
         return response()->json(['teacher' => $teacher], 201);
+    }
+
+    public function updateTeacher(Request $request, Teacher $teacher): JsonResponse
+    {
+        $this->requireStaff($request, ['admin']);
+        $data = $request->validate([
+            't_name' => ['required', 'string', 'max:50'],
+            't_gender' => ['nullable', 'string', 'max:20'],
+            't_address' => ['nullable', 'string', 'max:50'],
+            't_phone' => ['nullable', 'string', 'max:100'],
+            't_email' => ['required', 'email', 'max:50', Rule::unique('teacher_reg', 't_email')->ignore($teacher->t_id, 't_id')],
+            't_password' => ['nullable', 'string', 'min:6'],
+            'subject' => ['nullable', 'string', 'max:50'],
+            'permission' => ['nullable', 'string', 'max:200'],
+        ]);
+
+        if (empty($data['t_password'])) {
+            unset($data['t_password']);
+        }
+
+        $teacher->update($data);
+
+        return response()->json(['teacher' => $teacher]);
     }
 
     private function requireStaff(Request $request, array $roles = ['admin', 'teacher']): array
