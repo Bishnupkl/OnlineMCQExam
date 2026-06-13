@@ -14,6 +14,7 @@ Route::view('/notice', 'app');
 Route::view('/result', 'app');
 Route::view('/exam', 'app');
 Route::view('/exam-completed', 'app');
+Route::view('/teacher/questions', 'app');
 
 Route::prefix('api')->group(function () {
     Route::get('/session', [AuthController::class, 'session']);

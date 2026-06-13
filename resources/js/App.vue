@@ -139,6 +139,7 @@ function viewForPath(pathname) {
         '/result': 'dashboard',
         '/exam': 'exam',
         '/exam-completed': 'exam-completed',
+        '/teacher/questions': 'teacher-questions',
     }[pathname] ?? 'home';
 }
 
@@ -218,6 +219,8 @@ async function login() {
     user.value = data.user;
     if (loginForm.role === 'admin') {
         setAdminSection(adminSection.value);
+    } else if (loginForm.role === 'teacher') {
+        setView('teacher-questions', '/teacher/questions');
     } else {
         setView('dashboard', '/result');
     }
@@ -513,7 +516,11 @@ onMounted(async () => {
         if (user.value) {
             await refreshDashboard();
             if (requestedView === 'admin') {
-                view.value = isStaff.value ? 'admin' : 'dashboard';
+                view.value = user.value.role === 'admin' ? 'admin' : 'teacher-questions';
+                if (user.value.role === 'teacher') {
+                    window.history.replaceState({}, '', '/teacher/questions');
+                    currentPath.value = window.location.pathname;
+                }
             } else if (requestedView === 'exam' && user.value.role === 'student' && dashboard.value?.exam_taken && !dashboard.value?.result) {
                 setView('exam-completed', '/exam-completed');
             } else if (requestedView === 'exam' && user.value.role === 'student' && !dashboard.value?.exam_taken) {
@@ -522,12 +529,14 @@ onMounted(async () => {
                 setView('exam-completed', '/exam-completed');
             } else if (requestedView === 'exam-completed' && user.value.role === 'student' && dashboard.value?.exam_taken && !dashboard.value?.result) {
                 view.value = 'exam-completed';
+            } else if (requestedView === 'teacher-questions' && user.value.role === 'teacher') {
+                view.value = 'teacher-questions';
             } else if (['home', 'notices', 'dashboard'].includes(requestedView)) {
                 view.value = requestedView;
             } else {
                 view.value = 'dashboard';
             }
-        } else if (['admin', 'exam', 'exam-completed'].includes(requestedView)) {
+        } else if (['admin', 'exam', 'exam-completed', 'teacher-questions'].includes(requestedView)) {
             view.value = 'login';
         }
     } finally {
@@ -572,7 +581,8 @@ function syncViewFromPath() {
                     </li>
                     <li><button :class="{ active: view === 'notices' }" @click="setView('notices', '/notice')">Notice</button></li>
                     <li v-if="user"><button :class="{ active: view === 'dashboard' || view === 'exam-completed' }" @click="goToResult">Result</button></li>
-                    <li v-if="isStaff"><button :class="{ active: view === 'admin' }" @click="setView('admin', '/admin')">Manage</button></li>
+                    <li v-if="user?.role === 'teacher'"><button :class="{ active: view === 'teacher-questions' }" @click="setView('teacher-questions', '/teacher/questions')">Add Question</button></li>
+                    <li v-if="user?.role === 'admin'"><button :class="{ active: view === 'admin' }" @click="setView('admin', '/admin')">Manage</button></li>
                     <li><a href="#contact">Contact</a></li>
                     <li v-if="user"><button :disabled="busy" @click="runAction(logout)">Logout</button></li>
                 </ul>
@@ -684,7 +694,8 @@ function syncViewFromPath() {
                 <p class="eyebrow">Quick action</p>
                 <h3>Question bank</h3>
                 <p>{{ questions.length }} questions currently available for randomized exams.</p>
-                <button class="primary" @click="setAdminSection('questions')">Manage exam</button>
+                <button v-if="user.role === 'admin'" class="primary" @click="setAdminSection('questions')">Manage exam</button>
+                <button v-else class="primary" @click="setView('teacher-questions', '/teacher/questions')">Add question</button>
             </article>
         </section>
 
@@ -695,6 +706,31 @@ function syncViewFromPath() {
                 <p>You will get the notification when the result gets published.</p>
                 <p>{{ completedResultLabel() }}</p>
                 <button class="primary" @click="setView('notices', '/notice')">View notices</button>
+            </article>
+        </section>
+
+        <section v-else-if="view === 'teacher-questions'" class="legacy-container teacher-question-page">
+            <article class="panel teacher-question-card">
+                <p class="eyebrow">Teacher panel</p>
+                <h2>Add exam question</h2>
+                <p>Add MCQ questions from the frontend. The question will be added to the exam question bank immediately.</p>
+                <form class="teacher-question-form" @submit.prevent="runAction(saveQuestion)">
+                    <label>Question <textarea v-model="questionForm.question" required></textarea></label>
+                    <div class="two">
+                        <label>Choice 1 <input v-model="questionForm.choice1" required></label>
+                        <label>Choice 2 <input v-model="questionForm.choice2" required></label>
+                        <label>Choice 3 <input v-model="questionForm.choice3" required></label>
+                        <label>Choice 4 <input v-model="questionForm.choice4" required></label>
+                        <label>Correct answer <input v-model="questionForm.correct_ans" required></label>
+                        <label>Mark <input v-model.number="questionForm.mark" type="number" min="0" step="0.25"></label>
+                    </div>
+                    <button class="legacy-primary" type="submit" :disabled="busy">{{ busy ? 'Saving...' : 'Save question' }}</button>
+                </form>
+            </article>
+            <article class="panel teacher-question-card">
+                <p class="eyebrow">Current bank</p>
+                <h3>{{ questions.length }} questions available</h3>
+                <p>Use the admin panel only for full management. Teachers can add new questions here without entering the backend panel.</p>
             </article>
         </section>
 

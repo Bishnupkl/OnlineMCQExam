@@ -179,6 +179,9 @@ h4 {
 .legacy-form input,
 .legacy-form select,
 .legacy-form textarea,
+.teacher-question-form input,
+.teacher-question-form select,
+.teacher-question-form textarea,
 .admin-layout input,
 .admin-layout select,
 .admin-layout textarea {
@@ -571,6 +574,29 @@ label {
     font-size: clamp(2rem, 4vw, 3.5rem);
 }
 
+.teacher-question-page {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+    gap: 24px;
+    align-items: start;
+    padding: 4em 0;
+}
+
+.teacher-question-card {
+    display: grid;
+    gap: 16px;
+}
+
+.teacher-question-card h2 {
+    color: #20b2aa;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+}
+
+.teacher-question-form {
+    display: grid;
+    gap: 16px;
+}
+
 .ghost,
 .danger {
     border: 1px solid #ddd;
@@ -961,7 +987,8 @@ label {
     .exam2-row,
     .admin-stats-row,
     .admin-date-row,
-    .admin-forms-row {
+    .admin-forms-row,
+    .teacher-question-page {
         grid-template-columns: 1fr;
     }
 
