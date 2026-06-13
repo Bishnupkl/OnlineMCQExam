@@ -67,7 +67,7 @@ h4 {
     position: relative;
     z-index: 10;
     min-height: 96px;
-    background: #fff url('/legacy-assets/back2.png');
+    background: #fff;
 }
 
 .legacy-navbar {
@@ -200,8 +200,7 @@ h4 {
     z-index: 1;
     min-height: 42em;
     margin-top: -36px;
-    background-size: cover;
-    background-position: center;
+    background: linear-gradient(135deg, #0a8585 0%, #16c7c7 46%, #f4ffff 100%);
     text-align: center;
 }
 

@@ -546,7 +546,7 @@ function syncViewFromPath() {
         <p v-if="loading" class="legacy-container panel loading-state">Loading application...</p>
 
         <section v-else-if="view === 'home'" class="legacy-home">
-            <section class="legacy-banner" :style="{ backgroundImage: `linear-gradient(rgba(23, 22, 23, .2), rgba(23, 22, 23, .5)), url(${activeSlide.image})` }">
+            <section class="legacy-banner">
                 <button class="carousel-arrow left" @click="carouselIndex = (carouselIndex + slides.length - 1) % slides.length">&lt;</button>
                 <h2>{{ activeSlide.title }}</h2>
                 <button class="carousel-arrow right" @click="carouselIndex = (carouselIndex + 1) % slides.length">&gt;</button>
