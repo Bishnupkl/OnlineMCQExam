@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\AdminAccount;
 use App\Models\ExamDate;
 use App\Models\Notice;
-use App\Models\Question;
 use App\Models\Teacher;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -24,6 +23,7 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             StudentUserSeeder::class,
             TeacherUserSeeder::class,
+            QuestionsFromSqlSeeder::class,
         ]);
 
         $admin = AdminAccount::updateOrCreate(
@@ -78,42 +78,5 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $questions = [
-            [
-                'question' => 'A train 110m long travels at 60 km/hr. A man walks at 6 km/hr in the opposite direction. How long does the train take to pass him?',
-                'choice1' => '6.6 sec',
-                'choice2' => '66 sec',
-                'choice3' => '6 sec',
-                'choice4' => '5.4 sec',
-                'correct_ans' => '6 sec',
-            ],
-            [
-                'question' => 'The maximum speed of a car on a level road of radius 80m, with friction coefficient 0.25, is approximately:',
-                'choice1' => '10 m/s',
-                'choice2' => '8 m/s',
-                'choice3' => '12 m/s',
-                'choice4' => '14 m/s',
-                'correct_ans' => '14 m/s',
-            ],
-            [
-                'question' => 'Inscription on a tomb is called:',
-                'choice1' => 'Epitaph',
-                'choice2' => 'Cemetery',
-                'choice3' => 'Morgue',
-                'choice4' => 'Demagogue',
-                'correct_ans' => 'Epitaph',
-            ],
-        ];
-
-        foreach ($questions as $question) {
-            Question::updateOrCreate(
-                ['question' => $question['question']],
-                [
-                    ...$question,
-                    'mark' => 1,
-                    'uploaded_by' => 'teacher@example.com',
-                ]
-            );
-        }
     }
 }
