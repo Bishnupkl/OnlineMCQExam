@@ -75,16 +75,6 @@ class AuthController extends Controller
             return response()->json(['message' => 'Invalid role for this account.'], 422);
         }
 
-        $student = $data['role'] === 'student'
-            ? Student::where('email', $user->email)->first()
-            : null;
-
-        if ($student?->exam_status === 'taken') {
-            Auth::logout();
-
-            return response()->json(['message' => 'This student has already taken the exam.'], 409);
-        }
-
         $request->session()->regenerate();
 
         return response()->json(['user' => $user->sessionPayload()]);

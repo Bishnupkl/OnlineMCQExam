@@ -553,6 +553,24 @@ label {
     gap: 10px;
 }
 
+.completed-page {
+    display: grid;
+    place-items: center;
+    padding: 5em 0;
+}
+
+.completed-card {
+    width: min(760px, 100%);
+    display: grid;
+    gap: 16px;
+    text-align: center;
+}
+
+.completed-card h2 {
+    color: #20b2aa;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+}
+
 .ghost,
 .danger {
     border: 1px solid #ddd;

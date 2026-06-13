@@ -138,6 +138,7 @@ function viewForPath(pathname) {
         '/notice': 'notices',
         '/result': 'dashboard',
         '/exam': 'exam',
+        '/exam-completed': 'exam-completed',
     }[pathname] ?? 'home';
 }
 
@@ -157,6 +158,21 @@ function adminSectionForPath(pathname) {
 function setAdminSection(section) {
     adminSection.value = section;
     setView('admin', section === 'dashboard' ? '/admin' : `/admin/${section}`);
+}
+
+function goToResult() {
+    if (user.value?.role === 'student' && dashboard.value?.exam_taken && !dashboard.value?.result) {
+        setView('exam-completed', '/exam-completed');
+        return;
+    }
+
+    setView('dashboard', '/result');
+}
+
+function completedResultLabel() {
+    return dashboard.value?.result_date
+        ? `Result publish date: ${String(dashboard.value.result_date).slice(0, 10)}`
+        : 'You will get a notification when the result gets published.';
 }
 
 function setMessage(text, type = 'success') {
@@ -206,6 +222,9 @@ async function login() {
         setView('dashboard', '/result');
     }
     await Promise.all([refreshDashboard(), loadNotices()]);
+    if (user.value?.role === 'student' && dashboard.value?.exam_taken && !dashboard.value?.result) {
+        setView('exam-completed', '/exam-completed');
+    }
 }
 
 async function registerStudent() {
@@ -253,7 +272,7 @@ async function submitExam() {
         exam_taken: true,
     };
     exam.value = null;
-    setView('dashboard', '/result');
+    setView(result.result ? 'dashboard' : 'exam-completed', result.result ? '/result' : '/exam-completed');
     setMessage(result.message ?? 'Exam submitted. Result will be visible after admin publishes it.');
 }
 
@@ -495,14 +514,20 @@ onMounted(async () => {
             await refreshDashboard();
             if (requestedView === 'admin') {
                 view.value = isStaff.value ? 'admin' : 'dashboard';
+            } else if (requestedView === 'exam' && user.value.role === 'student' && dashboard.value?.exam_taken && !dashboard.value?.result) {
+                setView('exam-completed', '/exam-completed');
             } else if (requestedView === 'exam' && user.value.role === 'student' && !dashboard.value?.exam_taken) {
                 await startExam();
+            } else if (requestedView === 'dashboard' && user.value.role === 'student' && dashboard.value?.exam_taken && !dashboard.value?.result) {
+                setView('exam-completed', '/exam-completed');
+            } else if (requestedView === 'exam-completed' && user.value.role === 'student' && dashboard.value?.exam_taken && !dashboard.value?.result) {
+                view.value = 'exam-completed';
             } else if (['home', 'notices', 'dashboard'].includes(requestedView)) {
                 view.value = requestedView;
             } else {
                 view.value = 'dashboard';
             }
-        } else if (['admin', 'exam'].includes(requestedView)) {
+        } else if (['admin', 'exam', 'exam-completed'].includes(requestedView)) {
             view.value = 'login';
         }
     } finally {
@@ -546,7 +571,7 @@ function syncViewFromPath() {
                         </div>
                     </li>
                     <li><button :class="{ active: view === 'notices' }" @click="setView('notices', '/notice')">Notice</button></li>
-                    <li v-if="user"><button :class="{ active: view === 'dashboard' }" @click="setView('dashboard', '/result')">Result</button></li>
+                    <li v-if="user"><button :class="{ active: view === 'dashboard' || view === 'exam-completed' }" @click="goToResult">Result</button></li>
                     <li v-if="isStaff"><button :class="{ active: view === 'admin' }" @click="setView('admin', '/admin')">Manage</button></li>
                     <li><a href="#contact">Contact</a></li>
                     <li v-if="user"><button :disabled="busy" @click="runAction(logout)">Logout</button></li>
@@ -660,6 +685,16 @@ function syncViewFromPath() {
                 <h3>Question bank</h3>
                 <p>{{ questions.length }} questions currently available for randomized exams.</p>
                 <button class="primary" @click="setAdminSection('questions')">Manage exam</button>
+            </article>
+        </section>
+
+        <section v-else-if="view === 'exam-completed'" class="legacy-container completed-page">
+            <article class="panel completed-card">
+                <p class="eyebrow">Exam completed</p>
+                <h2>Your exam has already been submitted.</h2>
+                <p>You will get the notification when the result gets published.</p>
+                <p>{{ completedResultLabel() }}</p>
+                <button class="primary" @click="setView('notices', '/notice')">View notices</button>
             </article>
         </section>
 
