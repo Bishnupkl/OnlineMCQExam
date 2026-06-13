@@ -31,6 +31,7 @@ let timer = null;
 let carouselTimer = null;
 
 const loginForm = reactive({ role: 'student', email: '', password: '' });
+const registerRole = ref('student');
 const registerForm = reactive({
     name: '',
     address: '',
@@ -40,6 +41,15 @@ const registerForm = reactive({
     email: '',
     password: '',
     gender: '',
+});
+const teacherRegisterForm = reactive({
+    t_name: '',
+    t_gender: '',
+    t_address: '',
+    t_phone: '',
+    t_email: '',
+    t_password: '',
+    subject: '',
 });
 const studentForm = reactive({
     name: '',
@@ -144,6 +154,8 @@ function viewForPath(pathname) {
     return {
         '/login': 'login',
         '/register': 'register',
+        '/register/student': 'register',
+        '/register/teacher': 'register',
         '/notice': 'notices',
         '/result': 'dashboard',
         '/exam': 'exam',
@@ -158,6 +170,11 @@ function setView(nextView, path = null) {
         window.history.pushState({}, '', path);
     }
     currentPath.value = window.location.pathname;
+}
+
+function setRegisterRole(role) {
+    registerRole.value = role;
+    setView('register', role === 'teacher' ? '/register/teacher' : '/register/student');
 }
 
 function adminSectionForPath(pathname) {
@@ -252,6 +269,23 @@ async function registerStudent() {
     user.value = data.user;
     setView('dashboard', '/result');
     await Promise.all([refreshDashboard(), loadNotices()]);
+}
+
+async function registerTeacher() {
+    const data = await api('/api/teachers', { method: 'POST', body: teacherRegisterForm });
+    user.value = data.user;
+    loginForm.role = 'teacher';
+    setView('teacher-questions', '/teacher/questions');
+    await Promise.all([refreshDashboard(), loadNotices()]);
+}
+
+async function submitRegistration() {
+    if (registerRole.value === 'teacher') {
+        await registerTeacher();
+        return;
+    }
+
+    await registerStudent();
 }
 
 async function logout() {
@@ -525,6 +559,10 @@ onMounted(async () => {
         if (requestedView === 'admin') {
             loginForm.role = 'admin';
             adminSection.value = adminSectionForPath(window.location.pathname);
+        } else if (window.location.pathname === '/register/teacher') {
+            registerRole.value = 'teacher';
+        } else if (window.location.pathname === '/register/student' || window.location.pathname === '/register') {
+            registerRole.value = 'student';
         }
 
         const session = await api('/api/session');
@@ -575,6 +613,10 @@ function syncViewFromPath() {
     view.value = nextView;
     if (nextView === 'admin') {
         adminSection.value = adminSectionForPath(currentPath.value);
+    } else if (currentPath.value === '/register/teacher') {
+        registerRole.value = 'teacher';
+    } else if (currentPath.value === '/register/student' || currentPath.value === '/register') {
+        registerRole.value = 'student';
     }
 }
 </script>
@@ -590,10 +632,10 @@ function syncViewFromPath() {
                     <li><button :class="{ active: view === 'home' }" @click="setView('home', '/')">Home</button></li>
                     <li v-if="!user"><button :class="{ active: view === 'login' }" @click="setView('login', '/login')">LogIn</button></li>
                     <li v-if="!user" class="dropdown-shell">
-                        <button :class="{ active: view === 'register' }" @click="setView('register', '/register')">Register</button>
+                        <button :class="{ active: view === 'register' }" @click="setRegisterRole('student')">Register</button>
                         <div class="dropdown-menu">
-                            <button @click="setView('register', '/register')">Student</button>
-                            <button @click="setView('register', '/register')">Teacher</button>
+                            <button @click="setRegisterRole('student')">Student</button>
+                            <button @click="setRegisterRole('teacher')">Teacher</button>
                         </div>
                     </li>
                     <li><button :class="{ active: view === 'notices' }" @click="setView('notices', '/notice')">Notice</button></li>
@@ -633,9 +675,11 @@ function syncViewFromPath() {
 
         <Register
             v-else-if="view === 'register'"
+            :role="registerRole"
             :register-form="registerForm"
+            :teacher-register-form="teacherRegisterForm"
             :busy="busy"
-            @submit="runAction(registerStudent)"
+            @submit="runAction(submitRegistration)"
         />
 
         <Dashboard

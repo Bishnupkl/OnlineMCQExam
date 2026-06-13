@@ -10,6 +10,7 @@ Route::view('/admin', 'app');
 Route::view('/admin/{section}', 'app')->whereIn('section', ['students', 'teachers', 'questions', 'result', 'notice']);
 Route::view('/login', 'app');
 Route::view('/register', 'app');
+Route::view('/register/{role}', 'app')->whereIn('role', ['student', 'teacher']);
 Route::view('/notice', 'app');
 Route::view('/result', 'app');
 Route::view('/exam', 'app');
@@ -21,6 +22,7 @@ Route::prefix('api')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/students', [AuthController::class, 'registerStudent']);
+    Route::post('/teachers', [AuthController::class, 'registerTeacher']);
 
     Route::get('/public-stats', [ExamController::class, 'publicStats']);
     Route::get('/dashboard', [ExamController::class, 'dashboard']);
