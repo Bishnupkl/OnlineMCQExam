@@ -98,6 +98,50 @@ class AdminController extends Controller
         return response()->json(['notice' => $notice], 201);
     }
 
+    public function storeStudent(Request $request): JsonResponse
+    {
+        $this->requireStaff($request, ['admin']);
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'address' => ['nullable', 'string', 'max:100'],
+            'fatname' => ['nullable', 'string', 'max:255'],
+            'dob' => ['nullable', 'date'],
+            'phone' => ['nullable', 'string', 'max:110'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('stu_reg', 'email')],
+            'password' => ['required', 'string', 'min:6'],
+            'gender' => ['nullable', 'string', 'max:20'],
+            'exam_status' => ['nullable', Rule::in(['not taken', 'taken'])],
+        ]);
+
+        $student = Student::create([
+            ...$data,
+            'reg_date' => now()->toDateString(),
+            'exam_status' => $data['exam_status'] ?? 'not taken',
+        ]);
+
+        return response()->json(['student' => $student], 201);
+    }
+
+    public function storeResult(Request $request): JsonResponse
+    {
+        $this->requireStaff($request, ['admin']);
+        $data = $request->validate([
+            'email' => ['required', 'email', 'max:255'],
+            'ques_attempted' => ['required', 'integer', 'min:0'],
+            'mark_obtained' => ['required', 'numeric'],
+            'right_answer' => ['required', 'integer', 'min:0'],
+            'wrong_answer' => ['required', 'integer', 'min:0'],
+            'status' => ['required', Rule::in(['not taken', 'Passed', 'Failed'])],
+        ]);
+
+        $result = Result::updateOrCreate(
+            ['email' => $data['email']],
+            $data
+        );
+
+        return response()->json(['result' => $result], 201);
+    }
+
     public function setExamDate(Request $request): JsonResponse
     {
         $this->requireStaff($request, ['admin']);

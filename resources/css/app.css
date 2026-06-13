@@ -888,6 +888,10 @@ label {
     padding: 20px;
 }
 
+.admin-section-form {
+    margin: 18px 0 24px;
+}
+
 .admin-manage-card h2 {
     color: #20b2aa;
 }

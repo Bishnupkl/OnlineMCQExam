@@ -30,6 +30,27 @@ const registerForm = reactive({
     password: '',
     gender: '',
 });
+const studentForm = reactive({
+    name: '',
+    address: '',
+    fatname: '',
+    dob: '',
+    phone: '',
+    email: '',
+    password: '',
+    gender: '',
+    exam_status: 'not taken',
+});
+const teacherForm = reactive({
+    t_name: '',
+    t_gender: '',
+    t_address: '',
+    t_phone: '',
+    t_email: '',
+    t_password: '',
+    subject: '',
+    permission: '',
+});
 const questionForm = reactive({
     question: '',
     choice1: '',
@@ -40,6 +61,14 @@ const questionForm = reactive({
     mark: 1,
 });
 const noticeForm = reactive({ n_heading: '', n_text: '', n_description: '' });
+const resultForm = reactive({
+    email: '',
+    ques_attempted: 0,
+    mark_obtained: 0,
+    right_answer: 0,
+    wrong_answer: 0,
+    status: 'not taken',
+});
 const examDateForm = reactive({ edate: '' });
 
 const isStaff = computed(() => ['admin', 'teacher'].includes(user.value?.role));
@@ -239,6 +268,53 @@ async function saveQuestion() {
     });
     await loadAdmin();
     setMessage('Question saved.');
+}
+
+async function saveStudent() {
+    await api('/api/admin/students', { method: 'POST', body: studentForm });
+    Object.assign(studentForm, {
+        name: '',
+        address: '',
+        fatname: '',
+        dob: '',
+        phone: '',
+        email: '',
+        password: '',
+        gender: '',
+        exam_status: 'not taken',
+    });
+    await loadAdmin();
+    setMessage('Student saved.');
+}
+
+async function saveTeacher() {
+    await api('/api/admin/teachers', { method: 'POST', body: teacherForm });
+    Object.assign(teacherForm, {
+        t_name: '',
+        t_gender: '',
+        t_address: '',
+        t_phone: '',
+        t_email: '',
+        t_password: '',
+        subject: '',
+        permission: '',
+    });
+    await loadAdmin();
+    setMessage('Teacher saved.');
+}
+
+async function saveResult() {
+    await api('/api/admin/results', { method: 'POST', body: resultForm });
+    Object.assign(resultForm, {
+        email: '',
+        ques_attempted: 0,
+        mark_obtained: 0,
+        right_answer: 0,
+        wrong_answer: 0,
+        status: 'not taken',
+    });
+    await loadAdmin();
+    setMessage('Result saved.');
 }
 
 async function deleteQuestion(id) {
@@ -526,6 +602,20 @@ onUnmounted(() => {
 
                 <div v-if="adminSection === 'dashboard' || adminSection === 'teachers'" class="admin-table-block">
                     <h3>Grant permission to the teachers</h3>
+                    <form v-if="adminSection === 'teachers'" class="admin-manage-card admin-section-form" @submit.prevent="runAction(saveTeacher)">
+                        <h2>Add teacher</h2>
+                        <div class="two">
+                            <label>Name <input v-model="teacherForm.t_name" required></label>
+                            <label>Email <input v-model="teacherForm.t_email" type="email" required></label>
+                            <label>Password <input v-model="teacherForm.t_password" type="password" required></label>
+                            <label>Subject <input v-model="teacherForm.subject"></label>
+                            <label>Gender <input v-model="teacherForm.t_gender"></label>
+                            <label>Phone <input v-model="teacherForm.t_phone"></label>
+                            <label>Address <input v-model="teacherForm.t_address"></label>
+                            <label>Permission <input v-model="teacherForm.permission"></label>
+                        </div>
+                        <button type="submit" :disabled="busy">Save teacher</button>
+                    </form>
                     <table class="admin-table">
                         <thead>
                             <tr>
@@ -556,6 +646,26 @@ onUnmounted(() => {
 
                 <div v-if="adminSection === 'students'" class="admin-table-block">
                     <h3>Students</h3>
+                    <form class="admin-manage-card admin-section-form" @submit.prevent="runAction(saveStudent)">
+                        <h2>Add student</h2>
+                        <div class="two">
+                            <label>Name <input v-model="studentForm.name" required></label>
+                            <label>Email <input v-model="studentForm.email" type="email" required></label>
+                            <label>Password <input v-model="studentForm.password" type="password" required></label>
+                            <label>Phone <input v-model="studentForm.phone"></label>
+                            <label>Date of birth <input v-model="studentForm.dob" type="date"></label>
+                            <label>Gender <input v-model="studentForm.gender"></label>
+                            <label>Address <input v-model="studentForm.address"></label>
+                            <label>Father Name <input v-model="studentForm.fatname"></label>
+                            <label>Exam Status
+                                <select v-model="studentForm.exam_status">
+                                    <option value="not taken">not taken</option>
+                                    <option value="taken">taken</option>
+                                </select>
+                            </label>
+                        </div>
+                        <button type="submit" :disabled="busy">Save student</button>
+                    </form>
                     <table class="admin-table">
                         <thead>
                             <tr>
@@ -588,6 +698,19 @@ onUnmounted(() => {
 
                 <div v-if="adminSection === 'questions'" class="admin-table-block">
                     <h3>Questions</h3>
+                    <form class="admin-manage-card admin-section-form" @submit.prevent="runAction(saveQuestion)">
+                        <h2>Add question</h2>
+                        <label>Question <textarea v-model="questionForm.question" required></textarea></label>
+                        <div class="two">
+                            <label>Choice 1 <input v-model="questionForm.choice1" required></label>
+                            <label>Choice 2 <input v-model="questionForm.choice2" required></label>
+                            <label>Choice 3 <input v-model="questionForm.choice3" required></label>
+                            <label>Choice 4 <input v-model="questionForm.choice4" required></label>
+                            <label>Correct answer <input v-model="questionForm.correct_ans" required></label>
+                            <label>Mark <input v-model.number="questionForm.mark" type="number" min="0" step="0.25"></label>
+                        </div>
+                        <button type="submit" :disabled="busy">Save question</button>
+                    </form>
                     <table class="admin-table">
                         <thead>
                             <tr>
@@ -620,6 +743,24 @@ onUnmounted(() => {
 
                 <div v-if="adminSection === 'result'" class="admin-table-block">
                     <h3>Result</h3>
+                    <form class="admin-manage-card admin-section-form" @submit.prevent="runAction(saveResult)">
+                        <h2>Add result</h2>
+                        <div class="two">
+                            <label>Email <input v-model="resultForm.email" type="email" required></label>
+                            <label>Attempted <input v-model.number="resultForm.ques_attempted" type="number" min="0" required></label>
+                            <label>Mark <input v-model.number="resultForm.mark_obtained" type="number" step="0.25" required></label>
+                            <label>Right Answer <input v-model.number="resultForm.right_answer" type="number" min="0" required></label>
+                            <label>Wrong Answer <input v-model.number="resultForm.wrong_answer" type="number" min="0" required></label>
+                            <label>Status
+                                <select v-model="resultForm.status" required>
+                                    <option value="not taken">not taken</option>
+                                    <option value="Passed">Passed</option>
+                                    <option value="Failed">Failed</option>
+                                </select>
+                            </label>
+                        </div>
+                        <button type="submit" :disabled="busy">Save result</button>
+                    </form>
                     <table class="admin-table">
                         <thead>
                             <tr>
@@ -648,6 +789,13 @@ onUnmounted(() => {
 
                 <div v-if="adminSection === 'notice'" class="admin-table-block">
                     <h3>Notice</h3>
+                    <form class="admin-manage-card admin-section-form" @submit.prevent="runAction(saveNotice)">
+                        <h2>Add notice</h2>
+                        <label>Heading <input v-model="noticeForm.n_heading" required></label>
+                        <label>Short text <input v-model="noticeForm.n_text"></label>
+                        <label>Description <textarea v-model="noticeForm.n_description"></textarea></label>
+                        <button type="submit" :disabled="busy">Save notice</button>
+                    </form>
                     <table class="admin-table">
                         <thead>
                             <tr>
@@ -670,7 +818,7 @@ onUnmounted(() => {
                     </table>
                 </div>
 
-                <div v-if="adminSection === 'dashboard' || adminSection === 'questions' || adminSection === 'notice'" class="admin-forms-row">
+                <div v-if="adminSection === 'dashboard'" class="admin-forms-row">
                     <form class="admin-manage-card" @submit.prevent="runAction(saveQuestion)">
                         <h2>Add question</h2>
                         <label>Question <textarea v-model="questionForm.question" required></textarea></label>
