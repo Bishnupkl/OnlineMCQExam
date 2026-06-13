@@ -39,11 +39,15 @@ class AdminController extends Controller
 
     public function questions(Request $request): JsonResponse
     {
-        $this->requireStaff($request);
+        $user = $this->requireStaff($request);
+        $query = Question::query()->latest('q_id');
+
+        if ($user['role'] === 'teacher') {
+            $query->where('uploaded_by', $user['email']);
+        }
 
         return response()->json([
-            'questions' => Question::query()
-                ->latest('q_id')
+            'questions' => $query
                 ->get()
                 ->makeVisible('correct_ans'),
         ]);
@@ -79,7 +83,9 @@ class AdminController extends Controller
 
     public function updateQuestion(Request $request, Question $question): JsonResponse
     {
-        $this->requireStaff($request);
+        $user = $this->requireStaff($request);
+        $this->authorizeQuestionOwner($user, $question);
+
         $data = $request->validate([
             'question' => ['required', 'string', 'max:2000'],
             'choice1' => ['required', 'string', 'max:255'],
@@ -104,7 +110,9 @@ class AdminController extends Controller
 
     public function deleteQuestion(Request $request, Question $question): JsonResponse
     {
-        $this->requireStaff($request);
+        $user = $this->requireStaff($request);
+        $this->authorizeQuestionOwner($user, $question);
+
         $question->delete();
 
         return response()->json(['message' => 'Question deleted.']);
@@ -315,6 +323,15 @@ class AdminController extends Controller
         abort_unless(in_array($user['role'], $roles, true), 403, 'Insufficient permission.');
 
         return $user;
+    }
+
+    private function authorizeQuestionOwner(array $user, Question $question): void
+    {
+        if ($user['role'] === 'admin') {
+            return;
+        }
+
+        abort_unless($question->uploaded_by === $user['email'], 403, 'You can only manage questions uploaded by you.');
     }
 
     private function resultPublished(): bool

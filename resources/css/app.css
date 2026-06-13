@@ -614,6 +614,21 @@ label {
     gap: 16px;
 }
 
+.teacher-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.teacher-question-list {
+    grid-column: 1 / -1;
+    overflow-x: auto;
+}
+
+.teacher-question-table-wrap {
+    overflow-x: auto;
+}
+
 .ghost,
 .danger {
     border: 1px solid #ddd;

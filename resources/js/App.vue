@@ -707,8 +707,12 @@ function syncViewFromPath() {
             v-else-if="view === 'teacher-questions'"
             :question-form="questionForm"
             :questions="questions"
+            :editing-question="Boolean(editing.question)"
             :busy="busy"
             @submit="runAction(saveQuestion)"
+            @edit="editQuestion"
+            @delete="(id) => runAction(() => deleteQuestion(id))"
+            @reset="resetQuestionForm"
         />
 
         <Exam
