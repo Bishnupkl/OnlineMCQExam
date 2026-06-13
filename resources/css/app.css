@@ -64,6 +64,9 @@ h4 {
 }
 
 .legacy-header {
+    position: relative;
+    z-index: 10;
+    min-height: 96px;
     background: #fff url('/legacy-assets/back2.png');
 }
 
@@ -194,6 +197,7 @@ h4 {
 
 .legacy-banner {
     position: relative;
+    z-index: 1;
     min-height: 42em;
     margin-top: -36px;
     background-size: cover;

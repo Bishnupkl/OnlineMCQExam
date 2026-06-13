@@ -7,6 +7,7 @@ const loading = ref(true);
 const message = ref('');
 const view = ref('home');
 const adminSection = ref('dashboard');
+const currentPath = ref(window.location.pathname);
 const notices = ref([]);
 const dashboard = ref(null);
 const publicStats = ref({ students: 0, teachers: 0, questions: 0, notices: 0 });
@@ -72,6 +73,7 @@ const resultForm = reactive({
 const examDateForm = reactive({ edate: '' });
 
 const isStaff = computed(() => ['admin', 'teacher'].includes(user.value?.role));
+const showPublicChrome = computed(() => currentPath.value === '/' || !['exam', 'admin'].includes(view.value));
 const attemptedCount = computed(() => Object.values(answers).filter(Boolean).length);
 const examProgress = computed(() => {
     if (!exam.value?.questions?.length) {
@@ -134,6 +136,7 @@ function setView(nextView, path = null) {
     if (path && window.location.pathname !== path) {
         window.history.pushState({}, '', path);
     }
+    currentPath.value = window.location.pathname;
 }
 
 function adminSectionForPath(pathname) {
@@ -336,6 +339,7 @@ async function saveExamDate() {
 }
 
 onMounted(async () => {
+    window.addEventListener('popstate', syncViewFromPath);
     carouselTimer = window.setInterval(() => {
         carouselIndex.value = (carouselIndex.value + 1) % slides.length;
     }, 4500);
@@ -369,16 +373,26 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+    window.removeEventListener('popstate', syncViewFromPath);
     stopTimer();
     if (carouselTimer) {
         window.clearInterval(carouselTimer);
     }
 });
+
+function syncViewFromPath() {
+    currentPath.value = window.location.pathname;
+    const nextView = viewForPath(currentPath.value);
+    view.value = nextView;
+    if (nextView === 'admin') {
+        adminSection.value = adminSectionForPath(currentPath.value);
+    }
+}
 </script>
 
 <template>
     <main>
-        <header v-if="view !== 'exam' && view !== 'admin'" class="legacy-header" id="home">
+        <header v-if="showPublicChrome" class="legacy-header" id="home">
             <nav class="legacy-navbar">
                 <button class="brand-button" @click="setView('home', '/')">
                     <img :src="'/legacy-assets/logo.png'" alt="Online Entrance Examination">
@@ -853,7 +867,7 @@ onUnmounted(() => {
             </article>
         </section>
 
-        <footer v-if="view !== 'exam' && view !== 'admin'" class="legacy-footer">
+        <footer v-if="showPublicChrome" class="legacy-footer">
             <div class="legacy-container footer-grid">
                 <div class="footer-social">
                     <h4>Follow us on:</h4>
