@@ -72,6 +72,7 @@ const resultForm = reactive({
     status: 'not taken',
 });
 const examDateForm = reactive({ edate: '' });
+const resultDateForm = reactive({ rdate: '' });
 const editing = reactive({
     student: null,
     teacher: null,
@@ -245,10 +246,15 @@ async function submitExam() {
         method: 'POST',
         body: { answers },
     });
-    dashboard.value = { ...(dashboard.value ?? {}), result: result.result };
+    dashboard.value = {
+        ...(dashboard.value ?? {}),
+        result: result.result,
+        result_published: result.result_published,
+        exam_taken: true,
+    };
     exam.value = null;
     setView('dashboard', '/result');
-    setMessage('Exam submitted. Result saved.');
+    setMessage(result.message ?? 'Exam submitted. Result will be visible after admin publishes it.');
 }
 
 function stopTimer() {
@@ -266,6 +272,7 @@ async function loadAdmin() {
     dashboard.value = { ...(dashboard.value ?? {}), ...overview };
     questions.value = questionData.questions;
     examDateForm.edate = overview.exam_date ?? '';
+    resultDateForm.rdate = overview.result_date ?? '';
 }
 
 async function saveQuestion() {
@@ -337,6 +344,12 @@ async function saveExamDate() {
     await api('/api/admin/exam-date', { method: 'POST', body: examDateForm });
     await refreshDashboard();
     setMessage('Exam date updated.');
+}
+
+async function saveResultDate() {
+    await api('/api/admin/result-date', { method: 'POST', body: resultDateForm });
+    await refreshDashboard();
+    setMessage('Result publish date updated.');
 }
 
 function resetStudentForm() {
@@ -482,7 +495,7 @@ onMounted(async () => {
             await refreshDashboard();
             if (requestedView === 'admin') {
                 view.value = isStaff.value ? 'admin' : 'dashboard';
-            } else if (requestedView === 'exam' && user.value.role === 'student' && !dashboard.value?.result) {
+            } else if (requestedView === 'exam' && user.value.role === 'student' && !dashboard.value?.exam_taken) {
                 await startExam();
             } else if (['home', 'notices', 'dashboard'].includes(requestedView)) {
                 view.value = requestedView;
@@ -621,7 +634,7 @@ function syncViewFromPath() {
                 <p class="eyebrow">{{ user.role }}</p>
                 <h2>{{ user.name }}</h2>
                 <p class="hero-copy">Exam date: {{ dashboard?.exam_date ?? 'Not scheduled' }}</p>
-                <button v-if="user.role === 'student' && !dashboard?.result" class="primary" :disabled="busy" @click="runAction(startExam)">
+                <button v-if="user.role === 'student' && !dashboard?.exam_taken && !dashboard?.result" class="primary" :disabled="busy" @click="runAction(startExam)">
                     Start exam
                 </button>
                 <div v-if="dashboard?.result" class="result-strip" :class="resultStatusClass">
@@ -629,6 +642,9 @@ function syncViewFromPath() {
                     <strong>{{ dashboard.result.mark_obtained }} marks</strong>
                     <small>{{ dashboard.result.right_answer }} right / {{ dashboard.result.wrong_answer }} wrong</small>
                 </div>
+                <p v-else-if="user.role === 'student' && dashboard?.exam_taken" class="hero-copy">
+                    Exam submitted. Result will be visible after admin publishes it.
+                </p>
             </article>
             <article class="panel stat"><span>{{ dashboard?.question_count ?? dashboard?.questions ?? 0 }}</span><small>Questions ready</small></article>
             <article class="panel stat"><span>{{ dashboard?.notice_count ?? 0 }}</span><small>Published notices</small></article>
@@ -732,10 +748,11 @@ function syncViewFromPath() {
                         <input v-model="examDateForm.edate" type="date" required>
                         <button type="submit" :disabled="busy">Set Exam Date</button>
                     </form>
-                    <form class="admin-date-card right">
+                    <form class="admin-date-card right" @submit.prevent="runAction(saveResultDate)">
                         <h2>Set Result Date</h2>
-                        <input type="date">
-                        <button type="button">Publish Result</button>
+                        <input v-model="resultDateForm.rdate" type="date" required>
+                        <button type="submit" :disabled="busy">Publish Result</button>
+                        <p>{{ dashboard?.result_published ? 'Result is visible to students.' : 'Result is hidden from students.' }}</p>
                     </form>
                 </div>
 

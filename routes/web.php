@@ -38,6 +38,7 @@ Route::prefix('api')->group(function () {
     Route::post('/admin/results', [AdminController::class, 'storeResult']);
     Route::put('/admin/results/{result}', [AdminController::class, 'updateResult']);
     Route::post('/admin/exam-date', [AdminController::class, 'setExamDate']);
+    Route::post('/admin/result-date', [AdminController::class, 'setResultDate']);
     Route::post('/admin/teachers', [AdminController::class, 'storeTeacher']);
     Route::put('/admin/teachers/{teacher}', [AdminController::class, 'updateTeacher']);
 });

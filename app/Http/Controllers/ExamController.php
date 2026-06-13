@@ -17,13 +17,20 @@ class ExamController extends Controller
     public function dashboard(Request $request): JsonResponse
     {
         $user = $this->requireUser($request);
+        $student = $user['role'] === 'student'
+            ? Student::where('email', $user['email'])->first()
+            : null;
+        $resultPublished = $this->resultPublished();
 
         return response()->json([
             'user' => $user,
             'exam_date' => ExamDate::query()->latest('id')->value('edate'),
+            'result_date' => DB::table('rdate')->where('id', 1)->value('rdate'),
+            'result_published' => $resultPublished,
+            'exam_taken' => $student?->exam_status === 'taken',
             'question_count' => Question::query()->count(),
             'notice_count' => Notice::query()->count(),
-            'result' => $user['role'] === 'student'
+            'result' => $user['role'] === 'student' && $resultPublished
                 ? Result::where('email', $user['email'])->first()
                 : null,
         ]);
@@ -140,7 +147,18 @@ class ExamController extends Controller
             return $result;
         });
 
-        return response()->json(['result' => $result]);
+        return response()->json([
+            'result' => $this->resultPublished() ? $result : null,
+            'result_published' => $this->resultPublished(),
+            'message' => 'Exam submitted. Result will be visible after admin publishes it.',
+        ]);
+    }
+
+    private function resultPublished(): bool
+    {
+        $resultDate = DB::table('rdate')->where('id', 1)->value('rdate');
+
+        return $resultDate !== null && now()->toDateString() >= $resultDate;
     }
 
     private function requireUser(Request $request): array

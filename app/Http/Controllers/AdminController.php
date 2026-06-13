@@ -11,6 +11,7 @@ use App\Models\Teacher;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class AdminController extends Controller
@@ -31,6 +32,8 @@ class AdminController extends Controller
                 ->orderBy('t_id')
                 ->get(['t_id', 't_name', 'subject', 't_gender', 't_address', 't_phone', 't_email', 'permission']),
             'exam_date' => ExamDate::query()->latest('id')->value('edate'),
+            'result_date' => DB::table('rdate')->where('id', 1)->value('rdate'),
+            'result_published' => $this->resultPublished(),
         ]);
     }
 
@@ -238,6 +241,24 @@ class AdminController extends Controller
         return response()->json(['exam_date' => $examDate]);
     }
 
+    public function setResultDate(Request $request): JsonResponse
+    {
+        $this->requireStaff($request, ['admin']);
+        $data = $request->validate([
+            'rdate' => ['required', 'date'],
+        ]);
+
+        DB::table('rdate')->updateOrInsert(
+            ['id' => 1],
+            ['rdate' => $data['rdate']]
+        );
+
+        return response()->json([
+            'result_date' => $data['rdate'],
+            'result_published' => $this->resultPublished(),
+        ]);
+    }
+
     public function storeTeacher(Request $request): JsonResponse
     {
         $this->requireStaff($request, ['admin']);
@@ -294,6 +315,13 @@ class AdminController extends Controller
         abort_unless(in_array($user['role'], $roles, true), 403, 'Insufficient permission.');
 
         return $user;
+    }
+
+    private function resultPublished(): bool
+    {
+        $resultDate = DB::table('rdate')->where('id', 1)->value('rdate');
+
+        return $resultDate !== null && now()->toDateString() >= $resultDate;
     }
 
     private function profileUser(Student|Teacher $profile): ?User

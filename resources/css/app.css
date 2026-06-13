@@ -14,10 +14,31 @@
 html,
 body {
     margin: 0;
+    min-height: 100%;
     font-size: 100%;
     font-family: 'Poppins', 'Trebuchet MS', sans-serif;
     background: #fff;
     color: #2c363e;
+}
+
+#app,
+main {
+    min-height: 100vh;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+}
+
+main > section {
+    flex: 1 0 auto;
+}
+
+main > .legacy-header,
+main > .toast,
+main > .legacy-footer {
+    flex: 0 0 auto;
 }
 
 button,
