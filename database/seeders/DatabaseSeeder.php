@@ -7,6 +7,7 @@ use App\Models\ExamDate;
 use App\Models\Notice;
 use App\Models\Question;
 use App\Models\Teacher;
+use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -19,12 +20,23 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        AdminAccount::updateOrCreate(
+        $admin = AdminAccount::updateOrCreate(
             ['email' => 'admin@example.com'],
             ['password' => 'password']
         );
 
-        Teacher::updateOrCreate(
+        User::updateOrCreate(
+            ['email' => $admin->email],
+            [
+                'name' => 'Administrator',
+                'password' => 'password',
+                'role' => 'admin',
+                'profile_type' => AdminAccount::class,
+                'profile_id' => $admin->id,
+            ]
+        );
+
+        $teacher = Teacher::updateOrCreate(
             ['t_email' => 'teacher@example.com'],
             [
                 't_name' => 'Exam Teacher',
@@ -35,6 +47,17 @@ class DatabaseSeeder extends Seeder
                 'subject' => 'General',
                 'rdate' => now()->toDateString(),
                 'permission' => 'active',
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => $teacher->t_email],
+            [
+                'name' => $teacher->t_name,
+                'password' => 'password',
+                'role' => 'teacher',
+                'profile_type' => Teacher::class,
+                'profile_id' => $teacher->t_id,
             ]
         );
 

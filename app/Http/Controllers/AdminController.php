@@ -8,6 +8,7 @@ use App\Models\Question;
 use App\Models\Result;
 use App\Models\Student;
 use App\Models\Teacher;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -146,7 +147,7 @@ class AdminController extends Controller
             'fatname' => ['nullable', 'string', 'max:255'],
             'dob' => ['nullable', 'date'],
             'phone' => ['nullable', 'string', 'max:110'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('stu_reg', 'email')],
+            'email' => ['required', 'email', 'max:255', Rule::unique('stu_reg', 'email'), Rule::unique('users', 'email')],
             'password' => ['required', 'string', 'min:6'],
             'gender' => ['nullable', 'string', 'max:20'],
             'exam_status' => ['nullable', Rule::in(['not taken', 'taken'])],
@@ -157,6 +158,8 @@ class AdminController extends Controller
             'reg_date' => now()->toDateString(),
             'exam_status' => $data['exam_status'] ?? 'not taken',
         ]);
+
+        $this->syncAuthUser($student->name, $student->email, $data['password'], 'student', Student::class, $student->id);
 
         return response()->json(['student' => $student], 201);
     }
@@ -170,7 +173,7 @@ class AdminController extends Controller
             'fatname' => ['nullable', 'string', 'max:255'],
             'dob' => ['nullable', 'date'],
             'phone' => ['nullable', 'string', 'max:110'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('stu_reg', 'email')->ignore($student->id)],
+            'email' => ['required', 'email', 'max:255', Rule::unique('stu_reg', 'email')->ignore($student->id), Rule::unique('users', 'email')->ignore($this->profileUser($student)->id ?? null)],
             'password' => ['nullable', 'string', 'min:6'],
             'gender' => ['nullable', 'string', 'max:20'],
             'exam_status' => ['nullable', Rule::in(['not taken', 'taken'])],
@@ -181,6 +184,7 @@ class AdminController extends Controller
         }
 
         $student->update($data);
+        $this->syncAuthUser($student->name, $student->email, $data['password'] ?? null, 'student', Student::class, $student->id);
 
         return response()->json(['student' => $student]);
     }
@@ -242,7 +246,7 @@ class AdminController extends Controller
             't_gender' => ['nullable', 'string', 'max:20'],
             't_address' => ['nullable', 'string', 'max:50'],
             't_phone' => ['nullable', 'string', 'max:100'],
-            't_email' => ['required', 'email', 'max:50', Rule::unique('teacher_reg', 't_email')],
+            't_email' => ['required', 'email', 'max:50', Rule::unique('teacher_reg', 't_email'), Rule::unique('users', 'email')],
             't_password' => ['required', 'string', 'min:6'],
             'subject' => ['nullable', 'string', 'max:50'],
             'permission' => ['nullable', 'string', 'max:200'],
@@ -252,6 +256,8 @@ class AdminController extends Controller
             ...$data,
             'rdate' => now()->toDateString(),
         ]);
+
+        $this->syncAuthUser($teacher->t_name, $teacher->t_email, $data['t_password'], 'teacher', Teacher::class, $teacher->t_id);
 
         return response()->json(['teacher' => $teacher], 201);
     }
@@ -264,7 +270,7 @@ class AdminController extends Controller
             't_gender' => ['nullable', 'string', 'max:20'],
             't_address' => ['nullable', 'string', 'max:50'],
             't_phone' => ['nullable', 'string', 'max:100'],
-            't_email' => ['required', 'email', 'max:50', Rule::unique('teacher_reg', 't_email')->ignore($teacher->t_id, 't_id')],
+            't_email' => ['required', 'email', 'max:50', Rule::unique('teacher_reg', 't_email')->ignore($teacher->t_id, 't_id'), Rule::unique('users', 'email')->ignore($this->profileUser($teacher)->id ?? null)],
             't_password' => ['nullable', 'string', 'min:6'],
             'subject' => ['nullable', 'string', 'max:50'],
             'permission' => ['nullable', 'string', 'max:200'],
@@ -275,17 +281,51 @@ class AdminController extends Controller
         }
 
         $teacher->update($data);
+        $this->syncAuthUser($teacher->t_name, $teacher->t_email, $data['t_password'] ?? null, 'teacher', Teacher::class, $teacher->t_id);
 
         return response()->json(['teacher' => $teacher]);
     }
 
     private function requireStaff(Request $request, array $roles = ['admin', 'teacher']): array
     {
-        abort_unless($request->session()->has('oee_user'), 401, 'Authentication required.');
+        abort_unless($request->user(), 401, 'Authentication required.');
 
-        $user = $request->session()->get('oee_user');
+        $user = $request->user()->sessionPayload();
         abort_unless(in_array($user['role'], $roles, true), 403, 'Insufficient permission.');
 
         return $user;
+    }
+
+    private function profileUser(Student|Teacher $profile): ?User
+    {
+        $profileType = $profile instanceof Student ? Student::class : Teacher::class;
+        $profileId = $profile instanceof Student ? $profile->id : $profile->t_id;
+
+        return User::query()
+            ->where('profile_type', $profileType)
+            ->where('profile_id', $profileId)
+            ->first();
+    }
+
+    private function syncAuthUser(string $name, string $email, ?string $password, string $role, string $profileType, int $profileId): void
+    {
+        $user = User::query()->firstOrNew([
+            'profile_type' => $profileType,
+            'profile_id' => $profileId,
+        ]);
+
+        $user->fill([
+            'name' => $name,
+            'email' => $email,
+            'role' => $role,
+            'profile_type' => $profileType,
+            'profile_id' => $profileId,
+        ]);
+
+        if ($password) {
+            $user->password = $password;
+        }
+
+        $user->save();
     }
 }

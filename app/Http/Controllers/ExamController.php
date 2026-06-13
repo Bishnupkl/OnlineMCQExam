@@ -145,9 +145,9 @@ class ExamController extends Controller
 
     private function requireUser(Request $request): array
     {
-        abort_unless($request->session()->has('oee_user'), 401, 'Authentication required.');
+        abort_unless($request->user(), 401, 'Authentication required.');
 
-        return $request->session()->get('oee_user');
+        return $request->user()->sessionPayload();
     }
 
     private function requireRole(Request $request, string $role): array
