@@ -463,6 +463,19 @@ h4 {
     padding: 4em 0;
 }
 
+.auth-page {
+    width: 100%;
+    min-height: 800px;
+    display: grid;
+    place-items: start center;
+    padding: 5em 15px;
+    margin-top: -36px;
+    background-image: linear-gradient(rgba(0, 0, 0, .18), rgba(0, 0, 0, .18)), url('/legacy-assets/s7.jpg');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+}
+
 .legacy-form,
 .panel {
     background: #fff;
@@ -476,6 +489,10 @@ h4 {
     margin: 0 auto;
     display: grid;
     gap: 16px;
+}
+
+.auth-card {
+    margin-top: 42px;
 }
 
 .legacy-form.wide {

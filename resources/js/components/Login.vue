@@ -8,8 +8,8 @@ defineEmits(['submit']);
 </script>
 
 <template>
-    <section class="legacy-container form-page">
-        <form class="legacy-form" @submit.prevent="$emit('submit')">
+    <section class="auth-page">
+        <form class="legacy-form auth-card" @submit.prevent="$emit('submit')">
             <h2>LogIn</h2>
             <label>Role
                 <select v-model="loginForm.role">

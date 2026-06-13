@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
-import AdminPanel from './components/AdminPanel.vue';
+import AdminPanel from './components/admin/AdminPanel.vue';
 import Dashboard from './components/Dashboard.vue';
 import Exam from './components/Exam.vue';
 import ExamCompleted from './components/ExamCompleted.vue';
