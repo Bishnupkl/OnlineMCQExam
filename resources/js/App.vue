@@ -6,6 +6,7 @@ const user = ref(null);
 const loading = ref(true);
 const message = ref('');
 const view = ref('home');
+const adminSection = ref('dashboard');
 const notices = ref([]);
 const dashboard = ref(null);
 const publicStats = ref({ students: 0, teachers: 0, questions: 0, notices: 0 });
@@ -87,8 +88,11 @@ async function api(path, options = {}) {
 }
 
 function viewForPath(pathname) {
+    if (pathname.startsWith('/admin')) {
+        return 'admin';
+    }
+
     return {
-        '/admin': 'admin',
         '/login': 'login',
         '/register': 'register',
         '/notice': 'notices',
@@ -101,6 +105,16 @@ function setView(nextView, path = null) {
     if (path && window.location.pathname !== path) {
         window.history.pushState({}, '', path);
     }
+}
+
+function adminSectionForPath(pathname) {
+    const section = pathname.replace(/^\/admin\/?/, '');
+    return ['students', 'teachers', 'questions', 'result', 'notice'].includes(section) ? section : 'dashboard';
+}
+
+function setAdminSection(section) {
+    adminSection.value = section;
+    setView('admin', section === 'dashboard' ? '/admin' : `/admin/${section}`);
 }
 
 function setMessage(text) {
@@ -143,7 +157,11 @@ async function loadPublicStats() {
 async function login() {
     const data = await api('/api/login', { method: 'POST', body: loginForm });
     user.value = data.user;
-    setView(view.value === 'login' && loginForm.role === 'admin' ? 'admin' : 'dashboard', loginForm.role === 'admin' ? '/admin' : '/result');
+    if (loginForm.role === 'admin') {
+        setAdminSection(adminSection.value);
+    } else {
+        setView('dashboard', '/result');
+    }
     await Promise.all([refreshDashboard(), loadNotices()]);
 }
 
@@ -251,6 +269,7 @@ onMounted(async () => {
         view.value = requestedView;
         if (requestedView === 'admin') {
             loginForm.role = 'admin';
+            adminSection.value = adminSectionForPath(window.location.pathname);
         }
 
         const session = await api('/api/session');
@@ -409,7 +428,7 @@ onUnmounted(() => {
                 <p class="eyebrow">Quick action</p>
                 <h3>Question bank</h3>
                 <p>{{ questions.length }} questions currently available for randomized exams.</p>
-                <button class="primary" @click="view = 'admin'">Manage exam</button>
+                <button class="primary" @click="setAdminSection('questions')">Manage exam</button>
             </article>
         </section>
 
@@ -463,17 +482,17 @@ onUnmounted(() => {
             </nav>
 
             <aside class="sb-sidebar">
-                <button class="active" @click="view = 'admin'">Dashboard</button>
-                <button>Students</button>
-                <button>Teachers</button>
-                <button>Questions</button>
-                <button>Result</button>
-                <button>Notice</button>
+                <button :class="{ active: adminSection === 'dashboard' }" @click="setAdminSection('dashboard')">Dashboard</button>
+                <button :class="{ active: adminSection === 'students' }" @click="setAdminSection('students')">Students</button>
+                <button :class="{ active: adminSection === 'teachers' }" @click="setAdminSection('teachers')">Teachers</button>
+                <button :class="{ active: adminSection === 'questions' }" @click="setAdminSection('questions')">Questions</button>
+                <button :class="{ active: adminSection === 'result' }" @click="setAdminSection('result')">Result</button>
+                <button :class="{ active: adminSection === 'notice' }" @click="setAdminSection('notice')">Notice</button>
                 <button class="sb-collapse">&lt;</button>
             </aside>
 
             <div class="content-wrapper">
-                <div class="admin-stats-row">
+                <div v-if="adminSection === 'dashboard'" class="admin-stats-row">
                     <div class="admin-stat seat-box">
                         <div class="admin-icon">seat</div>
                         <p><span>55</span>Seats</p>
@@ -492,7 +511,7 @@ onUnmounted(() => {
                     </div>
                 </div>
 
-                <div class="admin-date-row">
+                <div v-if="adminSection === 'dashboard'" class="admin-date-row">
                     <form class="admin-date-card" @submit.prevent="runAction(saveExamDate)">
                         <h2>Set Examination Date</h2>
                         <input v-model="examDateForm.edate" type="date" required>
@@ -505,7 +524,7 @@ onUnmounted(() => {
                     </form>
                 </div>
 
-                <div class="admin-table-block">
+                <div v-if="adminSection === 'dashboard' || adminSection === 'teachers'" class="admin-table-block">
                     <h3>Grant permission to the teachers</h3>
                     <table class="admin-table">
                         <thead>
@@ -535,7 +554,123 @@ onUnmounted(() => {
                     </table>
                 </div>
 
-                <div class="admin-forms-row">
+                <div v-if="adminSection === 'students'" class="admin-table-block">
+                    <h3>Students</h3>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <td>SN</td>
+                                <td>Name</td>
+                                <td>Address</td>
+                                <td>Father Name</td>
+                                <td>DOB</td>
+                                <td>Phone</td>
+                                <td>Email</td>
+                                <td>Gender</td>
+                                <td>Exam Status</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(student, index) in dashboard?.student_rows ?? []" :key="student.id">
+                                <td>{{ index + 1 }}</td>
+                                <td>{{ student.name }}</td>
+                                <td>{{ student.address }}</td>
+                                <td>{{ student.fatname }}</td>
+                                <td>{{ student.dob }}</td>
+                                <td>{{ student.phone }}</td>
+                                <td>{{ student.email }}</td>
+                                <td>{{ student.gender }}</td>
+                                <td>{{ student.exam_status }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div v-if="adminSection === 'questions'" class="admin-table-block">
+                    <h3>Questions</h3>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <td>SN</td>
+                                <td>Question</td>
+                                <td>Choice 1</td>
+                                <td>Choice 2</td>
+                                <td>Choice 3</td>
+                                <td>Choice 4</td>
+                                <td>Correct</td>
+                                <td>Mark</td>
+                                <td>Action</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(question, index) in questions" :key="question.q_id">
+                                <td>{{ index + 1 }}</td>
+                                <td>{{ question.question }}</td>
+                                <td>{{ question.choice1 }}</td>
+                                <td>{{ question.choice2 }}</td>
+                                <td>{{ question.choice3 }}</td>
+                                <td>{{ question.choice4 }}</td>
+                                <td>{{ question.correct_ans }}</td>
+                                <td>{{ question.mark }}</td>
+                                <td><button type="button" :disabled="busy" @click="runAction(() => deleteQuestion(question.q_id))">Delete</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div v-if="adminSection === 'result'" class="admin-table-block">
+                    <h3>Result</h3>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <td>SN</td>
+                                <td>Email</td>
+                                <td>Attempted</td>
+                                <td>Mark</td>
+                                <td>Right</td>
+                                <td>Wrong</td>
+                                <td>Status</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(result, index) in dashboard?.results ?? []" :key="result.id">
+                                <td>{{ index + 1 }}</td>
+                                <td>{{ result.email }}</td>
+                                <td>{{ result.ques_attempted }}</td>
+                                <td>{{ result.mark_obtained }}</td>
+                                <td>{{ result.right_answer }}</td>
+                                <td>{{ result.wrong_answer }}</td>
+                                <td>{{ result.status }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div v-if="adminSection === 'notice'" class="admin-table-block">
+                    <h3>Notice</h3>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <td>SN</td>
+                                <td>Date</td>
+                                <td>Heading</td>
+                                <td>Text</td>
+                                <td>Description</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(notice, index) in notices" :key="notice.n_id">
+                                <td>{{ index + 1 }}</td>
+                                <td>{{ notice.n_date }}</td>
+                                <td>{{ notice.n_heading }}</td>
+                                <td>{{ notice.n_text }}</td>
+                                <td>{{ notice.n_description }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div v-if="adminSection === 'dashboard' || adminSection === 'questions' || adminSection === 'notice'" class="admin-forms-row">
                     <form class="admin-manage-card" @submit.prevent="runAction(saveQuestion)">
                         <h2>Add question</h2>
                         <label>Question <textarea v-model="questionForm.question" required></textarea></label>

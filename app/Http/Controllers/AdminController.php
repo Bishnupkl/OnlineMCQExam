@@ -23,6 +23,9 @@ class AdminController extends Controller
             'teachers' => Teacher::query()->count(),
             'questions' => Question::query()->count(),
             'results' => Result::query()->latest('mark_obtained')->limit(25)->get(),
+            'student_rows' => Student::query()
+                ->orderBy('id')
+                ->get(['id', 'name', 'address', 'fatname', 'dob', 'phone', 'email', 'gender', 'exam_status']),
             'teacher_rows' => Teacher::query()
                 ->orderBy('t_id')
                 ->get(['t_id', 't_name', 'subject', 't_gender', 't_address', 't_phone', 't_email', 'permission']),
