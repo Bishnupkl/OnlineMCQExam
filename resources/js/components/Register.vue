@@ -9,19 +9,48 @@ defineEmits(['submit']);
 
 <template>
     <section class="auth-page">
-        <form class="legacy-form wide auth-card" @submit.prevent="$emit('submit')">
-            <h2>Student Registration</h2>
-            <div class="two">
-                <label>Name <input v-model="registerForm.name" required></label>
-                <label>Email <input v-model="registerForm.email" type="email" required></label>
-                <label>Password <input v-model="registerForm.password" type="password" required></label>
-                <label>Phone <input v-model="registerForm.phone"></label>
-                <label>Date of birth <input v-model="registerForm.dob" type="date"></label>
-                <label>Gender <input v-model="registerForm.gender"></label>
+        <form class="auth-legacy-form auth-register-form" @submit.prevent="$emit('submit')">
+            <h1 class="auth-legacy-title">STUDENT REGISTRATION FORM</h1>
+            <div class="auth-legacy-panel">
+                <label class="auth-row">
+                    <span>Your Name</span>
+                    <input v-model="registerForm.name" placeholder="Your Full Name" required>
+                </label>
+                <label class="auth-row">
+                    <span>Address</span>
+                    <input v-model="registerForm.address" placeholder="Your Address">
+                </label>
+                <label class="auth-row">
+                    <span>Father Name</span>
+                    <input v-model="registerForm.fatname" placeholder="Your Father Name">
+                </label>
+                <label class="auth-row compact">
+                    <span>Date of Birth</span>
+                    <input v-model="registerForm.dob" type="date" required>
+                </label>
+                <label class="auth-row">
+                    <span>Phone Number</span>
+                    <input v-model="registerForm.phone" placeholder="Phone Number">
+                </label>
+                <label class="auth-row">
+                    <span>Email</span>
+                    <input v-model="registerForm.email" type="email" placeholder="Your Email" required>
+                </label>
+                <label class="auth-row">
+                    <span>Password</span>
+                    <input v-model="registerForm.password" type="password" placeholder="Your Password" required>
+                </label>
+                <div class="auth-row auth-radio-row">
+                    <span>Gender</span>
+                    <div class="auth-radio-options">
+                        <label><input v-model="registerForm.gender" type="radio" value="male" required> Male</label>
+                        <label><input v-model="registerForm.gender" type="radio" value="female"> Female</label>
+                    </div>
+                </div>
+                <div class="auth-actions">
+                    <button type="submit" :disabled="busy">{{ busy ? 'CREATING...' : 'SUBMIT' }}</button>
+                </div>
             </div>
-            <label>Address <input v-model="registerForm.address"></label>
-            <label>Father name <input v-model="registerForm.fatname"></label>
-            <button class="legacy-primary" :disabled="busy">{{ busy ? 'Creating...' : 'Register' }}</button>
         </form>
     </section>
 </template>

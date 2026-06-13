@@ -1036,3 +1036,136 @@ label {
         width: auto;
     }
 }
+
+.auth-legacy-form {
+    width: min(760px, 100%);
+    margin-top: 0;
+}
+
+.auth-register-form {
+    width: min(840px, 100%);
+}
+
+.auth-legacy-title {
+    margin: 0 0 32px;
+    color: #fff;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(2rem, 3vw, 3rem);
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-align: center;
+    text-transform: uppercase;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, .6);
+}
+
+.auth-legacy-panel {
+    display: grid;
+    gap: 16px;
+    padding: 40px 38px 32px;
+    background: rgba(43, 38, 45, .72);
+    color: #fff;
+}
+
+.auth-row {
+    display: grid;
+    grid-template-columns: 170px minmax(0, 1fr);
+    align-items: center;
+    gap: 0;
+    color: #fff;
+    font-size: 14px;
+    text-transform: uppercase;
+}
+
+.auth-row span {
+    color: #fff;
+}
+
+.auth-row input,
+.auth-row select {
+    width: 100%;
+    min-height: 38px;
+    border: 1px solid rgba(255, 255, 255, .25);
+    border-radius: 0;
+    outline: none;
+    background: rgba(255, 255, 255, .08);
+    color: #fff;
+    padding: 10px 11px;
+    letter-spacing: 0;
+}
+
+.auth-row.compact input {
+    max-width: 210px;
+}
+
+.auth-row input::placeholder {
+    color: #fff;
+    opacity: 1;
+}
+
+.auth-row select option {
+    color: #111;
+}
+
+.auth-radio-row {
+    align-items: start;
+}
+
+.auth-radio-options {
+    display: grid;
+    gap: 14px;
+    justify-items: start;
+    text-transform: none;
+}
+
+.auth-radio-options label {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    color: #fff;
+    font-size: 16px;
+}
+
+.auth-radio-options input[type="radio"] {
+    width: 13px;
+    height: 13px;
+    accent-color: #cf2dc9;
+}
+
+.auth-actions {
+    padding-left: 170px;
+    margin-top: 8px;
+}
+
+.auth-actions button {
+    min-width: 134px;
+    border: 0;
+    background: #cf2dc9;
+    color: #fff;
+    padding: 12px 28px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.auth-actions button:hover {
+    background: #20b2aa;
+}
+
+@media (max-width: 700px) {
+    .auth-legacy-title {
+        letter-spacing: 2px;
+    }
+
+    .auth-legacy-panel {
+        padding: 28px 20px;
+    }
+
+    .auth-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .auth-actions {
+        padding-left: 0;
+    }
+}
