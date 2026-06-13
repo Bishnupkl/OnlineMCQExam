@@ -1,5 +1,7 @@
 <script setup>
-defineProps({
+import { computed, onBeforeUnmount, reactive, watch } from 'vue';
+
+const props = defineProps({
     activeSlide: { type: Object, required: true },
     slides: { type: Array, required: true },
     carouselIndex: { type: Number, required: true },
@@ -8,6 +10,60 @@ defineProps({
 });
 
 defineEmits(['previous-slide', 'next-slide']);
+
+const counterValues = reactive({
+    seats: 0,
+    teachers: 0,
+    subjects: 0,
+    students: 0,
+});
+
+const animationFrames = {};
+
+const toNumber = (value, fallback = 0) => {
+    const number = Number(value ?? fallback);
+    return Number.isFinite(number) ? number : fallback;
+};
+
+const statTargets = computed(() => ({
+    seats: toNumber(props.publicStats.seats, 55),
+    teachers: toNumber(props.dashboard?.teachers ?? props.publicStats.teachers, 0),
+    subjects: toNumber(props.publicStats.subjects, 4),
+    students: toNumber(props.dashboard?.students ?? props.publicStats.students, 0),
+}));
+
+const animateCounter = (key, target) => {
+    cancelAnimationFrame(animationFrames[key]);
+
+    const startValue = counterValues[key] ?? 0;
+    const startTime = performance.now();
+    const duration = 1000;
+
+    const tick = (now) => {
+        const progress = Math.min((now - startTime) / duration, 1);
+        const easedProgress = 1 - Math.pow(1 - progress, 3);
+
+        counterValues[key] = Math.round(startValue + (target - startValue) * easedProgress);
+
+        if (progress < 1) {
+            animationFrames[key] = requestAnimationFrame(tick);
+        }
+    };
+
+    animationFrames[key] = requestAnimationFrame(tick);
+};
+
+watch(
+    statTargets,
+    (targets) => {
+        Object.entries(targets).forEach(([key, target]) => animateCounter(key, target));
+    },
+    { immediate: true },
+);
+
+onBeforeUnmount(() => {
+    Object.values(animationFrames).forEach((frame) => cancelAnimationFrame(frame));
+});
 </script>
 
 <template>
@@ -29,10 +85,10 @@ defineEmits(['previous-slide', 'next-slide']);
         </section>
 
         <section class="legacy-stats">
-            <article class="counter-grid"><span>SE</span><p>{{ publicStats.seats ?? 55 }}</p><h4>Seats</h4></article>
-            <article class="counter-grid1"><span>TE</span><p>{{ dashboard?.teachers ?? publicStats.teachers }}</p><h4>Teachers</h4></article>
-            <article class="counter-grid2"><span>SU</span><p>{{ publicStats.subjects ?? 4 }}</p><h4>Subjects</h4></article>
-            <article class="counter-grid3"><span>ST</span><p>{{ dashboard?.students ?? publicStats.students }}</p><h4>Students</h4></article>
+            <article class="counter-grid"><span>SE</span><p class="counter">{{ counterValues.seats }}</p><h4>Seats</h4></article>
+            <article class="counter-grid1"><span>TE</span><p class="counter">{{ counterValues.teachers }}</p><h4>Teachers</h4></article>
+            <article class="counter-grid2"><span>SU</span><p class="counter">{{ counterValues.subjects }}</p><h4>Subjects</h4></article>
+            <article class="counter-grid3"><span>ST</span><p class="counter">{{ counterValues.students }}</p><h4>Students</h4></article>
         </section>
 
         <section class="legacy-team" id="contact">
