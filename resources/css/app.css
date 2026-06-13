@@ -200,7 +200,8 @@ h4 {
     z-index: 1;
     min-height: 42em;
     margin-top: -36px;
-    background: linear-gradient(135deg, #0a8585 0%, #16c7c7 46%, #f4ffff 100%);
+    background-size: cover;
+    background-position: center;
     text-align: center;
 }
 
